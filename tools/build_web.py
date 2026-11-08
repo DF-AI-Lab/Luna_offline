@@ -42,6 +42,8 @@ tail = '''<!-- ===== end of app/luna-offline.html ===== -->
 </html>
 '''
 out = head + app + tail
+ver = re.search(r"const VERSION = '([^']+)'", (root / 'docs/web/settings.js').read_text()).group(1)
+(root / 'docs/version.json').write_text('{"version": "%s"}\n' % ver)
 (root / 'docs/index.html').write_text(out)
 files = sorted(p for p in (root / 'docs').rglob('*') if p.is_file() and p.name not in ('sw.js',) and 'tests' not in p.parts)
 h = hashlib.sha1(b''.join(p.read_bytes() for p in files)).hexdigest()[:10]

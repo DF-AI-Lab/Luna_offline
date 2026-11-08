@@ -44,3 +44,5 @@ body.lw-locked .app { visibility: hidden; }
 .lw-meter { height: 6px; border-radius: 99px; background: rgba(255,255,255,.08); overflow: hidden; }
 .lw-meter i { display: block; height: 100%; background: linear-gradient(90deg, var(--green), var(--amber)); }
 .lw-ver { text-align: center; color: var(--soft); font: 500 .75rem var(--ui); margin: 14px 0 0; }
+
+.lw-vtag { font: 700 .72rem var(--ui); color: var(--soft); border: 1px solid var(--edge); border-radius: 99px; padding: 1px 8px; font-variant-numeric: tabular-nums; align-self: center; }

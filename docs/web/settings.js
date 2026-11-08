@@ -1,7 +1,7 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '0.1.0';
+  const VERSION = '1.01';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');
@@ -49,7 +49,9 @@
     const meta = document.querySelector('.top .meta'); if (!meta || $('lw-gear')) return;
     const b = document.createElement('button'); b.id = 'lw-gear'; b.type = 'button'; b.className = 'lw-gear'; b.setAttribute('aria-label', 'Settings');
     b.innerHTML = '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg>';
-    b.onclick = openSheet; meta.append(b);
+    b.onclick = openSheet;
+    const v = document.createElement('span'); v.id = 'lw-ver'; v.className = 'lw-vtag'; v.textContent = 'v' + VERSION;
+    meta.append(v, b);
   }
   function statusChip(name) {
     const s = LunaMCP.status(name);
@@ -86,7 +88,7 @@
       <section class="lw-sec"><h3>Passport</h3>
         <div class="lw-line lw-two"><button type="button" id="lw-pp">🛂 Passport settings</button><button type="button" id="lw-lock">🔒 Lock now</button></div>
       </section>
-      <p class="lw-ver">Luna Offline web v${VERSION}</p>`;
+      <p class="lw-ver">Luna Offline v${VERSION}</p>`;
     $('lw-body').querySelectorAll('[data-app]').forEach(b => b.onclick = () => app(b.dataset.app));
     $('lw-body').querySelectorAll('[data-mode]').forEach(b => b.onclick = () => { LunaWeb.setMode(b.dataset.mode); render(); });
     $('lw-keysave').onclick = () => { const v = $('lw-key').value.trim(); if (!v) return; LunaClaude.setKey(v); toast('Claude key saved on this phone'); render(); };

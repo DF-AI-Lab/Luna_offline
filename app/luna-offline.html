@@ -1,0 +1,460 @@
+<title>Orbit Agent</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<style>
+/* Orbit, live version: talks to Darren's real Google Calendar and TaskNotes. Same look as the 31 Oct mock. */
+:root {
+  --bg: #f1f2f4; --panel: #ffffff; --ink: #1c2024; --soft: #687079; --line: #dde0e4;
+  --accent: #7b5cf0; --accent-2: #5b3fd0; --accent-soft: #ece7fe; --on-accent: #ffffff;
+  --wmm: #1f9d55; --cal: #3b6fe0; --todo: #d48a00; --fridge: #0aa0b5; --note: #c0368a; --warn: #c2410c;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --r: 18px; --gap: 14px;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #131517; --panel: #1d2023; --ink: #eceef0; --soft: #9aa1a8; --line: #2c3034;
+  --accent: #a48cff; --accent-2: #8a70f0; --accent-soft: #241e3d; --on-accent: #0b1513;
+  --wmm: #4ccf86; --cal: #7fa3ff; --todo: #f2b84b; --fridge: #4fd0e0; --note: #f07cc0; --warn: #fb923c; color-scheme: dark } }
+:root[data-theme="dark"] {
+  --bg: #131517; --panel: #1d2023; --ink: #eceef0; --soft: #9aa1a8; --line: #2c3034;
+  --accent: #a48cff; --accent-2: #8a70f0; --accent-soft: #241e3d; --on-accent: #0b1513;
+  --wmm: #4ccf86; --cal: #7fa3ff; --todo: #f2b84b; --fridge: #4fd0e0; --note: #f07cc0; --warn: #fb923c; color-scheme: dark }
+
+html, body { height: 100%; }
+body { background: var(--bg); color: var(--ink); font: 17px/1.45 var(--body); }
+.app { max-width: 460px; height: 100%; margin: 0 auto; display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button { font: inherit; cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
+.label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--soft); font-weight: 700; }
+.small { font-size: 13px; color: var(--soft); }
+
+.top { margin-top: 10px; border-radius: var(--r); padding: 8px 10px; color: var(--on-accent);
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; gap: 12px; align-items: center; }
+.hello { flex: 1; min-width: 0; }
+.brand { font-size: 11px; text-transform: uppercase; letter-spacing: .14em; opacity: .85; font-weight: 700; }
+.top h1 { margin: 0; font: 800 19px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ava { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); }
+.mode { flex: none; border: 0; border-radius: 999px; background: rgba(255,255,255,.22); color: inherit; font-size: 13px; padding: 6px 10px; }
+
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding-inline: 18px; margin-inline: -18px; }
+.done { margin-top: 10px; display: grid; gap: 8px; }
+.donehead { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: 0; padding: 0; color: inherit; text-align: left; }
+.donelist { display: grid; gap: 8px; }
+.done.shut .donelist { display: none; }
+.item { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; }
+.item.gone span:nth-child(2) { text-decoration: line-through; color: var(--soft); }
+.dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; color: #fff; background: var(--c); font-weight: 700; }
+.item .app { font-size: 13px; color: var(--c); font-weight: 700; }
+.cal { --c: var(--cal); } .todo { --c: var(--todo); } .note { --c: var(--note); }
+.tag { display: inline-block; margin-left: 6px; font-size: 13px; font-weight: 700; color: #fff; background: var(--c); border-radius: 999px; padding: 1px 9px; vertical-align: 3px; }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 8px; }
+.trow { display: grid; gap: 2px; padding: 4px 0; border-top: 1px solid var(--line); }
+.trow:first-of-type { border-top: 0; }
+.trow .t1 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 15px; }
+.trow .t1 b { color: var(--ink); margin-right: 2px; }
+.trow .sub { font-size: 13px; color: var(--soft); }
+.chip { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 8px; background: var(--bg); color: var(--soft); border: 1px solid var(--line); }
+.chip.over { background: #e5383b; color: #fff; border-color: transparent; }
+.chip.today { background: #f59e0b; color: #1c1206; border-color: transparent; }
+.chip.tom { background: var(--cal); color: #fff; border-color: transparent; }
+details.nrow { border-top: 1px solid var(--line); padding: 5px 0; font-size: 15px; }
+details.nrow:first-of-type { border-top: 0; }
+details.nrow summary { cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px; list-style: none; }
+details.nrow summary::-webkit-details-marker { display: none; }
+details.nrow summary b { color: var(--ink); font-weight: 700; }
+details.nrow summary span { font-size: 13px; color: var(--soft); }
+details.nrow .full { font-size: 14px; color: var(--soft); padding-top: 4px; white-space: pre-wrap; }
+.mk { margin-top: 6px; font-size: 13px; border: 1px solid var(--todo); color: var(--todo); background: var(--panel); border-radius: 999px; padding: 2px 10px; font-weight: 700; }
+.pick button { font-size: 14px; border: 1px solid var(--c); color: var(--c); background: var(--panel); border-radius: 999px; padding: 3px 11px; font-weight: 700; }
+
+.log { display: flex; flex-direction: column; gap: var(--gap); padding-block: var(--gap); }
+.them { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; max-width: 92%; }
+.mini { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); }
+.say { font-size: 19px; line-height: 1.35; }
+.say.warn { color: var(--warn); font-size: 16px; }
+.me { align-self: flex-end; max-width: 80%; background: var(--accent-soft); padding: 9px 14px; border-radius: 18px 18px 4px 18px; border: 1px solid var(--line); }
+.more { display: flex; gap: 8px; padding-top: 6px; }
+.more button { font-size: 14px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 4px 12px; }
+.more button:disabled { opacity: .5; cursor: default; }
+.info { margin-top: 8px; display: grid; gap: 6px; padding: 10px 12px; }
+.info .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; font-size: 15px; font-variant-numeric: tabular-nums; }
+.info .row span:last-child { color: var(--soft); }
+.info .row b { color: var(--c, var(--ink)); }
+.think { display: flex; align-items: center; gap: 8px; min-height: 30px; font-size: 14px; color: var(--soft); }
+.them.ringing .mini { box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 3px var(--accent); }
+
+.box { margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
+.box input { width: 100%; min-width: 0; font: inherit; font-size: 18px; color: var(--ink); background: none; border: 0; padding: 4px 2px; }
+.box input::placeholder { color: var(--soft); }
+.box input:focus-visible { outline: none; }
+.box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.send { height: 40px; border-radius: 12px; border: 0; background: var(--accent); color: var(--on-accent); padding: 0 18px; font-weight: 700; }
+.send:disabled { opacity: .6; }
+.orb { width: 100%; height: 100%; overflow: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  .them.ringing .mini { animation: halo 2.2s ease-in-out infinite; }
+  @keyframes halo { 50% { box-shadow: 0 0 0 7px transparent, 0 0 0 3px var(--accent); } }
+  .new { animation: up .25s ease-out; } @keyframes up { from { transform: translateY(6px); opacity: .3; } }
+}
+</style>
+
+<div class="app">
+  <div class="top">
+    <div class="ava" aria-hidden="true" id="ava"></div>
+    <div class="hello"><div class="brand">Orbit Agent</div><h1 id="hi">Hello, Darren</h1></div>
+    <button class="mode" id="mode" type="button" aria-label="Light or dark">Auto</button>
+  </div>
+
+  <div class="scroll" id="scroll">
+    <div class="card done" id="done">
+      <button class="donehead" id="donehead" type="button" aria-expanded="true" aria-controls="donelist"><span class="label">Just done for you</span><span class="small" id="donecount">0 ▾</span></button>
+      <div class="donelist" id="donelist"><span class="small" id="noneyet">Nothing yet. Try "dentist tuesday 3pm" or "buy bin bags".</span></div>
+    </div>
+    <div class="log" id="log" aria-live="polite">
+      <div class="label" style="align-self:center">Coming up</div>
+    </div>
+  </div>
+
+  <form class="card box" id="box">
+    <input type="text" id="text" placeholder="Tell Orbit… e.g. dentist tue 3pm, note: …" aria-label="Message" autocomplete="off">
+    <button class="send" id="sendbtn" type="submit">Send</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  const CAL = 'Google Calendar', TN = 'TaskNotes';
+  const APPS = {
+    calendar: { cls: 'cal', name: 'Diary', where: 'Google Calendar' },
+    task: { cls: 'todo', name: 'To-do', where: 'TaskNotes' },
+    note: { cls: 'note', name: 'Note', where: 'TaskNotes' },
+  };
+  const $ = id => document.getElementById(id), root = document.documentElement;
+  const log = $('log'), scroller = $('scroll');
+  const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+  const ORB = l => `<svg class="orb" viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-24 20 20)"><ellipse cx="20" cy="20" rx="17" ry="7" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35"/>${
+    [['--wmm',19,0],['--cal',27,-9],['--todo',23,-15],['--fridge',31,-4]].map(([c,d,b]) => `<circle r="2.6" fill="var(${c})"><animateMotion dur="${d}s" begin="${b}s" repeatCount="indefinite" path="M3,20 a17,7 0 1,0 34,0 a17,7 0 1,0 -34,0"/></circle>`).join('')
+    }</g><text x="20" y="20" text-anchor="middle" dominant-baseline="central" style="font:800 16px var(--display);fill:${l === 'D' ? 'var(--accent-2)' : 'currentColor'}">${l}</text></svg>`;
+  $('ava').innerHTML = ORB('D');
+  const h = new Date().getHours();
+  $('hi').textContent = `${h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening'}, Darren`;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(() => document.querySelectorAll('svg.orb').forEach(x => x.pauseAnimations && x.pauseAnimations()), 0);
+
+  // light / dark, remembered on this phone only
+  const keep = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const modes = ['auto', 'light', 'dark'];
+  function setMode(m) { m === 'auto' ? root.removeAttribute('data-theme') : root.setAttribute('data-theme', m);
+    $('mode').textContent = m[0].toUpperCase() + m.slice(1); keep.set('orbit_mode', m); }
+  $('mode').onclick = () => setMode(modes[(modes.indexOf(keep.get('orbit_mode') || 'auto') + 1) % 3]);
+  setMode(keep.get('orbit_mode') || 'auto');
+
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const localIso = d => `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  function nextDay(dateStr) { const d = new Date(dateStr + 'T12:00:00'); d.setDate(d.getDate() + 1); return ymd(d); }
+  function addMins(time, m) { const [hh, mm] = time.split(':').map(Number); const t = hh * 60 + mm + m; return `${pad(Math.floor(t / 60) % 24)}:${pad(t % 60)}`; }
+  function niceDay(dateStr) {
+    const today = ymd(new Date()), tom = nextDay(today);
+    if (dateStr === today) return 'today'; if (dateStr === tom) return 'tomorrow';
+    const d = new Date(dateStr + 'T12:00:00'); return DAYS[d.getDay()].slice(0, 3) + ' ' + d.getDate();
+  }
+  function evWhen(ev) {
+    if (ev.start?.date) return niceDay(ev.start.date) + ', all day';
+    const d = new Date(ev.start?.dateTime);
+    return niceDay(ymd(d)) + ' ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' }).replace(':00', '');
+  }
+
+  // ---------- chat bits ----------
+  function bubble(t) { log.insertAdjacentHTML('beforeend', `<div class="me new">${esc(t)}</div>`); down(); }
+  function down() { scroller.scrollTop = scroller.scrollHeight; }
+  function orbitSays() {
+    const el = document.createElement('div'); el.className = 'them new ringing';
+    el.innerHTML = `<div class="mini" aria-hidden="true">${ORB('O')}</div><div class="body"><div class="think">Thinking…</div></div>`;
+    log.append(el); down();
+    return {
+      el,
+      doing(t) { el.classList.add('ringing'); el.querySelector('.body').innerHTML = `<div class="think">${esc(t)}</div>`; down(); },
+      say(t, extra, warn) { el.classList.remove('ringing'); el.querySelector('.body').innerHTML = `<div class="say${warn ? ' warn' : ''}">${esc(t)}</div>${extra || ''}`; down(); return el; },
+      sayHtml(html, extra) { el.classList.remove('ringing'); el.querySelector('.body').innerHTML = `<div class="say">${html}</div>${extra || ''}`; down(); return el; },
+    };
+  }
+
+  // one place that turns an error code into words Darren can act on
+  function trouble(e, where) {
+    const c = e && e.code;
+    if (c === 'needs_reauth') return `${where} needs signing in again: claude.ai Settings → Connectors.`;
+    if (c === 'server_not_connected' || c === 'server_not_found') return `${where} isn't connected. Add it in claude.ai Settings → Connectors.`;
+    if (c === 'selection_required') return `You have two ${where} connectors. Pick one when claude.ai asks, then try again.`;
+    if (c === 'not_in_manifest' || c === 'approval_required' || c === 'consent_required') return `Orbit isn't allowed to use ${where} yet. Allow it when asked, then try again.`;
+    if (c === 'not_granted' || c === 'sampling_disabled') return `Orbit isn't allowed to think with Claude here. Allow it when asked, then reload.`;
+    if (c === 'rate_limited') return 'Too many at once. Give it a minute.';
+    if (c === 'server_unavailable' || c === 'upstream_error') return `${where} didn't answer. It may or may not have gone in, so check before sending again.`;
+    if (c === 'tool_error') return `${where} said no: ${e.message}`;
+    if (c === 'invalid_json') return "I couldn't work that one out. Try saying it a bit differently.";
+    return `Something went wrong with ${where}${e && e.message ? ': ' + e.message : ''}.`;
+  }
+
+  // ---------- just done (with Undo), remembered on this phone ----------
+  let done = [];
+  try { done = JSON.parse(keep.get('orbit_done') || '[]'); } catch (e) { done = []; }
+  done.forEach(d => { if (d.kind === 'cal') d.kind = 'calendar'; });
+  function saveDone() { done = done.slice(0, 20); keep.set('orbit_done', JSON.stringify(done)); }
+  function renderDone() {
+    const list = $('donelist'); list.innerHTML = '';
+    if (!done.length) list.innerHTML = '<span class="small">Nothing yet. Try "dentist tuesday 3pm", "buy bin bags" or "note: ...".</span>';
+    done.forEach(d => { const A = APPS[d.kind] || APPS.task; list.insertAdjacentHTML('beforeend',
+      `<div class="item ${A.cls}${d.undone ? ' gone' : ''}"><span class="dot">${d.undone ? '↺' : '✓'}</span><span>${esc(d.label)}</span><span class="app">${A.name}</span></div>`); });
+    $('donecount').textContent = done.length + ($('done').classList.contains('shut') ? ' ▸' : ' ▾');
+  }
+  function fold(shut) { $('done').classList.toggle('shut', shut); $('donehead').setAttribute('aria-expanded', String(!shut)); renderDone(); }
+  $('donehead').onclick = () => fold(!$('done').classList.contains('shut'));
+  renderDone();
+
+  // ---------- capabilities light up when ready ----------
+  let mcp = null, sample = null, db = null;
+  const ready = Promise.all([
+    window.claude?.use('mcp').then(x => { mcp = x; }),
+    window.claude?.use('sample').then(x => { sample = x; }),
+    window.claude?.use('db').then(x => { db = x; }),
+  ].filter(Boolean));
+
+  // ---------- learning log: Darren's fixes, read before every guess ----------
+  async function lessons() {
+    if (!db) return [];
+    try {
+      const snap = await Promise.race([db.collection('learning').orderBy('at', 'desc').limit(30).get(),
+        new Promise((_, no) => setTimeout(() => no('slow'), 4000))]);
+      return snap.docs.map(d => d.data()).filter(Boolean);
+    } catch (e) { return []; }
+  }
+  // the full log: every message + what happened (kept / undo / moved / also). Training data for later.
+  function logIt(row) {
+    if (!db) return Promise.resolve(null);
+    const ref = db.collection('log').doc();
+    return ref.set({ ...row, at: new Date().toISOString() }).then(() => ref, () => null);
+  }
+  function mark(refP, patch) { Promise.resolve(refP).then(ref => ref && ref.update({ ...patch, changed: new Date().toISOString() })).catch(() => {}); }
+  async function learn(row) {
+    if (!db) return false;
+    try { await db.collection('learning').add({ ...row, at: new Date().toISOString() }); return true; } catch (e) { return false; }
+  }
+
+  // ---------- coming up / reading ----------
+  function tnText(r) { return String(r.payload ?? (r.content?.[0]?.text || '')); }
+  // ---------- card recipes (see orbit/apps/*.md) ----------
+  const strip = l => l.replace(/^- \[([^\]]+)\]\s*/, '');
+  const idOf = l => (l.match(/^- \[([^\]]+)\]/) || [])[1] || '';
+  function taskRow(line) {
+    const [title, , when = '', ...rest] = strip(line).split(' | ');
+    const time = rest.find(x => /^\d+h|^\d+m$|^\d+h \d+m$/.test(x)) || '';
+    const notes = (rest.find(x => x.startsWith('📝')) || '').replace(/^📝\s*/, '');
+    let chip = '';
+    if (when.startsWith('OVERDUE')) chip = `<span class="chip over">overdue ${esc(niceDay(when.replace('OVERDUE, was ', '')))}</span>`;
+    else if (when === 'today') chip = '<span class="chip today">today</span>';
+    else if (when === 'tomorrow') chip = '<span class="chip tom">tomorrow</span>';
+    else if (/^\d{4}-/.test(when)) chip = `<span class="chip">${esc(niceDay(when))}</span>`;
+    return `<div class="trow"><div class="t1"><b>${esc(title)}</b>${chip}${time ? `<span class="chip">⏱ ${esc(time)}</span>` : ''}</div>${notes ? `<div class="sub">${esc(notes)}</div>` : ''}</div>`;
+  }
+  const DATEY = /\b(\d{1,2}(st|nd|rd|th)? (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|\d{1,2}(:\d\d)? ?(am|pm)|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(rs|rsday)?|fri(day)?|sat(urday)?|sun(day)?|tomorrow|tonight)\b/i;
+  function noteRow(line) {
+    const id = idOf(line), parts = strip(line).split(' | ');
+    const cat = parts.length > 1 ? parts.pop() : '';
+    const text = parts.join(' | ').replace(/^🔖\s*/, '');
+    let first = text.split(/(?<=[.:!?])\s/)[0];
+    if (first.length > 70) first = first.slice(0, 67) + '…';
+    const rest = text.length > first.length ? text : '';
+    return `<details class="nrow"><summary><b>${esc(first)}</b><span>${esc(cat)}</span></summary>${rest ? `<div class="full">${esc(text)}</div>` : ''}${
+      DATEY.test(text) ? `<button type="button" class="mk" data-id="${esc(id)}" data-title="${esc(first.replace(/…$/, ''))}" data-text="${esc(text)}">Make it a task?</button>` : ''}</details>`;
+  }
+  log.addEventListener('click', async e => {
+    const b = e.target.closest('.mk'); if (!b || !mcp) return;
+    b.disabled = true; b.textContent = 'Adding…';
+    try {
+      const r = tnText(await mcp.callTool(TN, 'add_task', { title: b.dataset.title.slice(0, 120), details: b.dataset.text.slice(0, 2000) }));
+      const id = (r.match(/\[([^\]]+)\]/) || [])[1] || '';
+      done.unshift({ kind: 'task', id, label: b.dataset.title.slice(0, 60) }); saveDone(); renderDone();
+      logIt({ msg: '(made a task from a note)', picked: 'task', status: 'kept', from: 'note' });
+      b.textContent = 'Now a task ✓ (add a date in TaskNotes)';
+    } catch (err) { b.disabled = false; b.textContent = 'Make it a task?'; b.insertAdjacentHTML('afterend', `<div class="small">${esc(trouble(err, 'TaskNotes'))}</div>`); }
+  });
+
+  async function show(about, o, f) {
+    about = about || 'all'; f = f || {};
+    if (!mcp) return o.say("I can't reach your apps from here. Open me in claude.ai.", '', true);
+    o.doing('Having a look…');
+    const now = new Date(), week = new Date(now); week.setDate(week.getDate() + 7);
+    const want = { diary: about === 'all' || about === 'diary', tasks: about === 'all' || about === 'tasks', notes: about === 'notes' };
+    const [cal, tn, nt] = await Promise.allSettled([
+      want.diary ? mcp.callTool(CAL, 'list_events', { startTime: localIso(now), endTime: localIso(week), orderBy: 'startTime', pageSize: 6 }) : null,
+      want.tasks ? mcp.callTool(TN, 'day_summary', {}) : null,
+      want.notes ? mcp.callTool(TN, 'list_notes', { ...(f.category ? { category: f.category } : {}), ...(f.search ? { search: f.search } : {}) }) : null,
+    ]);
+    let card = '', bits = [];
+    if (want.diary) {
+      if (cal.status === 'fulfilled') {
+        const evs = (cal.value.payload && cal.value.payload.events) || [];
+        bits.push(evs.length ? `${evs.length} thing${evs.length > 1 ? 's' : ''} in the diary this week` : 'nothing in the diary this week');
+        if (evs.length) card += `<div class="card info cal"><div class="label">Diary, next 7 days</div>${evs.map(ev => `<div class="row"><b>${esc(ev.summary || '(no title)')}</b><span>${esc(evWhen(ev))}</span></div>`).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(cal.reason, 'Google Calendar'))}</div>`;
+    }
+    if (want.tasks) {
+      if (tn.status === 'fulfilled') {
+        const txt = tnText(tn.value);
+        const n = (txt.match(/(\d+) task\(s\) due or overdue/) || [])[1];
+        const lines = txt.split('\n').filter(l => l.startsWith('- [')).slice(0, 6);
+        if (n != null) bits.push(n === '0' ? 'nothing due on your list' : `${n} task${n === '1' ? '' : 's'} due`);
+        if (lines.length) card += `<div class="card info todo"><div class="label">To-do, due now</div>${lines.map(taskRow).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(tn.reason, 'TaskNotes'))}</div>`;
+    }
+    if (want.notes) {
+      if (nt.status === 'fulfilled') {
+        const all = tnText(nt.value).split('\n').filter(l => l.startsWith('- ['));
+        const lines = all.slice(-5).reverse();
+        const what = f.category || f.search ? `notes${f.category ? ' in ' + f.category : ''}${f.search ? ' about "' + f.search + '"' : ''}` : 'notes';
+        bits.push(lines.length ? `your ${all.length > 5 ? '5 newest ' : ''}${what}. Tap one to open it` : `no ${what} found`);
+        if (lines.length) card += `<div class="card info note"><div class="label">${esc(what)}, newest first</div>${lines.map(noteRow).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(nt.reason, 'TaskNotes'))}</div>`;
+    }
+    const line = bits.join(', ');
+    o.say(line ? line[0].toUpperCase() + line.slice(1) + '.' : 'Here is what I could find.', card);
+  }
+
+  // ---------- understand a message (Claude, quick) ----------
+  async function understand(t) {
+    const now = new Date();
+    const past = (await lessons()).filter(r => r.msg && r.right).slice(0, 20)
+      .map(r => `- "${String(r.msg).slice(0, 160)}" → ${r.right}${r.picked ? ` (NOT ${r.picked})` : ''}`).join('\n');
+    const prompt = `You are Orbit, Darren's assistant. Turn his short message into ONE action.
+Now: ${DAYS[now.getDay()]} ${ymd(now)} ${pad(now.getHours())}:${pad(now.getMinutes())} (UK time).
+
+Kinds:
+- "calendar": an appointment or event at a time or on a day (dentist tue 3pm, tennis tonight at 6).
+- "task": a to-do: something to do, buy, ring, fix, book (buy bin bags, ring the council friday).
+- "note": something to remember or jot down, an idea, info (note: wifi code is 1234, idea for the app...).
+- "question": he asks what is on, what is due, what his notes say, or if he is free.
+- "other": anything else (spending money, fridge food). Those apps are not connected yet.
+
+MOST IMPORTANT: if he says where it goes ("add to notes", "in my diary", "calendar", "on my list", "to-do", "note"), ALWAYS use that kind, even if it looks like another kind.
+${past ? `\nDarren's past corrections (follow these):\n${past}\n` : ''}
+Reply with only JSON like:
+{"kind":"calendar","title":"Dentist","text":"","date":"2026-11-10","time":"15:00","end":"","estimate_mins":0,"about":"","category":"","search":""}
+
+Rules:
+- title: short, starts with a capital, no date/time words, no "add to ..." words.
+- text: for a note, the note itself in full, without the "add to notes" words. Else "".
+- date: YYYY-MM-DD or "". A weekday means the next one coming (today only if the time has not passed). "tonight" = today.
+- time / end: 24h "HH:MM" or "". "3pm" = "15:00". Calendar with no time = all day (time "").
+- task date only if he gave one. estimate_mins only if he said how long, else 0.
+- about (question only): "diary", "tasks", "notes" or "all".
+- category (notes question only): one of Home, Work, AI Lab, Health if he names one ("project ideas" = AI Lab), else "".
+- search (notes question only): one word to look for if he asks about a topic, else "".
+
+Message: ${t}`;
+    return sample.json(prompt, { modelTier: 'quick', cache: false });
+  }
+
+  // ---------- do it ----------
+  async function add(kind, a, o) {
+    const A = APPS[kind];
+    if (kind === 'calendar') {
+      o.doing('Putting it in your diary…');
+      const allDay = !a.time, date = a.date || ymd(new Date());
+      const input = allDay
+        ? { summary: a.title, allDay: true, startTime: `${date}T00:00:00`, endTime: `${nextDay(date)}T00:00:00` }
+        : { summary: a.title, startTime: `${date}T${a.time}:00`, endTime: `${date}T${a.end || addMins(a.time, 60)}:00` };
+      const r = await mcp.callTool(CAL, 'create_event', input);
+      const p = r.payload || {};
+      const id = p.id || p.event?.id || (JSON.stringify(p).match(/"id"\s*:\s*"([^"]+)"/) || [])[1] || '';
+      const when = allDay ? niceDay(date) : niceDay(date) + ' ' + a.time;
+      return { kind, id, label: `${a.title}, ${when}`, say: `In the diary: ${a.title}, ${when}` };
+    }
+    if (kind === 'task') {
+      o.doing('Adding it to your list…');
+      const input = { title: a.title };
+      if (a.date) input.due = a.date;
+      if (a.estimate_mins > 0) input.estimate_mins = Number(a.estimate_mins);
+      const id = (tnText(await mcp.callTool(TN, 'add_task', input)).match(/\[([^\]]+)\]/) || [])[1] || '';
+      const when = a.date ? ', ' + niceDay(a.date) : '';
+      return { kind, id, label: a.title + when, say: `On your list: ${a.title}${when}` };
+    }
+    o.doing('Writing it in your notes…');
+    const text = a.text || a.title;
+    const id = (tnText(await mcp.callTool(TN, 'add_note', { text })).match(/\[([^\]]+)\]/) || [])[1] || '';
+    return { kind, id, label: text.length > 60 ? text.slice(0, 57) + '…' : text, say: `In your notes: ${text}` };
+  }
+  async function remove(d) {
+    if (!d.id) throw { code: 'tool_error', message: "I didn't get an id back, so remove it by hand." };
+    if (d.kind === 'calendar') await mcp.callTool(CAL, 'delete_event', { eventId: d.id });
+    else await mcp.callTool(TN, 'delete_item', { id: d.id });
+    d.undone = true; saveDone(); renderDone();
+  }
+
+  // show a finished job: what + where (coloured app tag), then Undo and Wrong app
+  function receipt(o, d, msg, a) {
+    const A = APPS[d.kind];
+    const el = o.sayHtml(`${esc(d.say)} ✓ <span class="tag ${A.cls}">${A.name}</span>`,
+      `<div class="more"><button type="button" data-do="undo">Undo</button><button type="button" data-do="wrong">Wrong app?</button></div><div class="fix"></div>`);
+    const btns = el.querySelectorAll('.more button'), fix = el.querySelector('.fix');
+    const note = (t) => { fix.innerHTML = `<div class="small" style="padding-top:6px">${esc(t)}</div>`; down(); };
+    btns[0].onclick = async () => {
+      btns.forEach(b => b.disabled = true); btns[0].textContent = 'Undoing…';
+      try { await remove(d); mark(d.logRef, { status: 'undo' }); btns[0].textContent = 'Undone ✓'; if (d.kind !== 'calendar') note('Crossed out in TaskNotes. Confirm the delete there.'); }
+      catch (e) { btns.forEach(b => b.disabled = false); btns[0].textContent = 'Undo'; note(trouble(e, A.where)); }
+    };
+    btns[1].onclick = () => {
+      const others = Object.keys(APPS).filter(k => k !== d.kind);
+      fix.innerHTML = `<div class="pick"><span class="small">Move to:</span>${others.map(k => `<button type="button" class="${APPS[k].cls}" data-move="${k}">${APPS[k].name}</button>`).join('')}</div>
+        <div class="pick"><span class="small">Keep it and also add to:</span>${others.map(k => `<button type="button" class="${APPS[k].cls}" data-also="${k}">${APPS[k].name}</button>`).join('')}</div>`;
+      down();
+      fix.querySelectorAll('button').forEach(b => b.onclick = () => redo(b.dataset.move || b.dataset.also, !!b.dataset.move));
+    };
+    async function redo(kind, move) {
+      btns.forEach(b => b.disabled = true);
+      const o2 = orbitSays();
+      try {
+        if (move && !d.undone) { o2.doing('Taking it out of ' + A.name + '…'); await remove(d); btns[0].textContent = 'Moved'; }
+        const d2 = await add(kind, a, o2);
+        done.unshift({ kind: d2.kind, id: d2.id, label: d2.label }); saveDone(); renderDone();
+        mark(d.logRef, move ? { status: 'moved', right: kind } : { status: 'also', right: d.kind + ' + ' + kind });
+        d2.logRef = d.logRef;
+        const ok = await learn(move ? { msg, picked: d.kind, right: kind, how: 'moved' } : { msg, picked: d.kind, right: d.kind + ' + ' + kind, how: 'also' });
+        fix.innerHTML = `<div class="small" style="padding-top:6px">${ok ? 'Got it, I\'ll remember that. 🧠' : 'Done, but I couldn\'t save the lesson.'}</div>`;
+        receipt(o2, d2, msg, a);
+      } catch (e) { btns.forEach(b => b.disabled = false); o2.say(trouble(e, APPS[kind].where), '', true); }
+    }
+  }
+
+  let busy = false;
+  $('box').onsubmit = async e => {
+    e.preventDefault();
+    const t = $('text').value.trim(); if (!t || busy) return;
+    busy = true; $('sendbtn').disabled = true; $('text').value = '';
+    fold(true); bubble(t);
+    await ready;
+    const o = orbitSays();
+    try {
+      if (!sample || !mcp) { o.say("I can't reach Claude or your apps from here. Open me in claude.ai.", '', true); return; }
+      let a;
+      try { a = await understand(t); } catch (err) { o.say(trouble(err, 'Claude'), '', true); return; }
+      if (!a || typeof a !== 'object') { o.say("I couldn't work that one out. Try saying it differently.", '', true); return; }
+      a.title = String(a.title || t).slice(0, 120); a.text = String(a.text || '').slice(0, 2000);
+      a.date = /^\d{4}-\d\d-\d\d$/.test(a.date) ? a.date : '';
+      a.time = /^\d\d:\d\d$/.test(a.time) ? a.time : ''; a.end = /^\d\d:\d\d$/.test(a.end) ? a.end : '';
+      const cats = ['Home', 'Work', 'AI Lab', 'Health'];
+      if (a.kind === 'question') { logIt({ msg: t, picked: 'question', status: 'kept' }); return show(a.about, o, { category: cats.includes(a.category) ? a.category : '', search: String(a.search || '').slice(0, 40) }); }
+      if (!APPS[a.kind]) { logIt({ msg: t, picked: 'other', status: 'kept' }); o.say("That's one for Money or Fridge. They're not hooked up yet, so for now I can do your diary, to-do list and notes."); return; }
+      let d;
+      try { d = await add(a.kind, a, o); } catch (err) { o.say(trouble(err, APPS[a.kind].where), '', true); return; }
+      done.unshift({ kind: d.kind, id: d.id, label: d.label }); saveDone(); renderDone();
+      d.logRef = logIt({ msg: t, picked: d.kind, status: 'kept' });
+      receipt(o, d, t, a);
+    } finally { busy = false; $('sendbtn').disabled = false; }
+  };
+
+  ready.then(() => show('all', orbitSays()));
+})();
+</script>

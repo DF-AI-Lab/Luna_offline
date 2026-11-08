@@ -1,0 +1,28 @@
+{
+  "name": "Luna",
+  "tagline": "Offline · Orbit's brain, Luna's look",
+  "button": "Open Luna",
+  "drive": "Luna",
+  "font": "Manrope",
+  "fontUrl": "https://fonts.googleapis.com/css2?family=Manrope:wght@500;700;800&display=swap",
+  "align": "center",
+  "logo": {
+    "type": "svg",
+    "value": "<svg viewBox=\"0 0 40 40\" width=\"34\" height=\"34\" aria-hidden=\"true\"><path d=\"M24 7a13 13 0 1 0 9 22.3A11 11 0 0 1 24 7z\" fill=\"#f4ecd2\"/></svg>"
+  },
+  "colors": {
+    "bg": "#03060f",
+    "text": "#f1f2ff",
+    "muted": "#a3a8c8",
+    "accent": "#8b7bf7",
+    "accentText": "#ffffff",
+    "field": "#0b1022",
+    "fieldBorder": "#2c3358",
+    "link": "#b4a8ff",
+    "error": "#ff8a80",
+    "tile": "#141a33",
+    "tileText": "#f4ecd2",
+    "tileBorder": "#3a4170",
+    "tileBorderStyle": "solid"
+  }
+}

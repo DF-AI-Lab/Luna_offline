@@ -1,0 +1,28 @@
+diff --git a/worker/src/oauth.js b/worker/src/oauth.js
+index ed16e70..c804885 100644
+--- a/worker/src/oauth.js
++++ b/worker/src/oauth.js
+@@ -35,6 +35,7 @@ export function redirectOk(uri) {
+     const u = new URL(uri);
+     if (u.protocol === 'https:' && /(^|\.)claude\.(ai|com)$/.test(u.hostname)) return true;
+     if (u.protocol === 'http:' && (u.hostname === 'localhost' || u.hostname === '127.0.0.1')) return true;   // MCP Inspector / Claude Code
++    if (u.protocol === 'https:' && u.hostname === 'df-ai-lab.github.io') return true;   // DF apps on GitHub Pages (Luna Offline)
+     return false;
+   } catch (e) { return false; }
+ }
+diff --git a/worker/test/worker.test.js b/worker/test/worker.test.js
+index a114f8e..d79bc0e 100644
+--- a/worker/test/worker.test.js
++++ b/worker/test/worker.test.js
+@@ -185,3 +185,11 @@ test('MCP handles unknown methods and bad messages', async () => {
+   assert.equal((await handle({jsonrpc: '2.0', id: 9, method: 'nope'}, env)).error.code, -32601);
+   assert.equal(await handle({jsonrpc: '2.0', method: 'notifications/cancelled'}, env), null);
+ });
++
++test('DF apps on GitHub Pages may connect (Luna Offline); other sites may not', async () => {
++  const {redirectOk} = await import('../src/oauth.js');
++  assert.equal(redirectOk('https://df-ai-lab.github.io/Luna_offline/'), true);
++  assert.equal(redirectOk('http://df-ai-lab.github.io/Luna_offline/'), false);
++  assert.equal(redirectOk('https://df-ai-lab.github.io.evil.example/'), false);
++  assert.equal(redirectOk('https://evil.github.io/'), false);
++});

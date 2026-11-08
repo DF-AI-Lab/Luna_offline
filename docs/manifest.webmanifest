@@ -1,0 +1,17 @@
+{
+  "id": "/Luna_offline/",
+  "name": "Luna Offline",
+  "short_name": "Luna",
+  "description": "Orbit's brain with Luna's look. Diary, to-do, notes and money in one message box.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#03060f",
+  "theme_color": "#03060f",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "icons/maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

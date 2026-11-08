@@ -1,0 +1,8 @@
+{
+  "name": "luna-offline",
+  "private": true,
+  "scripts": {
+    "build": "python3 tools/build_web.py",
+    "test": "node --test tests/brain.test.js && node tests/web.e2e.js"
+  }
+}

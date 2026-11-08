@@ -1,0 +1,728 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Luna Offline</title>
+<meta name="description" content="Orbit's brain with Luna's look. Tell it things: diary, to-do, notes, money.">
+<meta name="theme-color" content="#03060f">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Josefin+Sans:wght@200&family=Manrope:wght@500;700&display=swap">
+<link rel="stylesheet" href="passport/passport.css">
+<link rel="stylesheet" href="web/web.css">
+<script src="passport/config.js"></script>
+<script src="passport/google.js"></script>
+<script src="passport/passport.js"></script>
+<script src="passport/ui.js"></script>
+<script src="web/brain.js"></script>
+<script src="web/claude.js"></script>
+<script src="web/store.js"></script>
+<script src="web/connect.js"></script>
+<script src="web/shim.js"></script>
+</head>
+<body class="lw-locked">
+<div class="ppcover" id="ppcover"><div id="ppmount"></div></div>
+<!-- ===== app/luna-offline.html (do not edit here: edit that file, then run tools/build_web.py) ===== -->
+<style>
+/* Luna Offline = Orbit's brain (all the JS below is Orbit's, unchanged) wearing Luna's look:
+   deep-space sky that shifts with the time of day, moving stars, glass banner with the real moon,
+   glass cards, violet accents. Single dark look on purpose, like Luna. */
+:root {
+  color-scheme: dark;
+  --sky-top: #010205; --sky-mid: #03060f; --sky-low: #07101e;
+  --glow: rgba(70, 110, 170, .10); --glow-pos: 85% -10%;
+  --glass: rgba(255, 255, 255, .04); --glass-hi: rgba(255, 255, 255, .075);
+  --edge: rgba(190, 200, 255, .14);
+  --ink: #f1f2ff; --soft: #a3a8c8; --line: rgba(190, 200, 255, .12);
+  --accent: #a99bff; --accent-2: #6c5ce7; --accent-soft: rgba(169, 155, 255, .12); --on-accent: #ffffff;
+  --moon: #f4ecd2; --red: #ff8a80; --amber: #f5c26b; --green: #7fe0a8;
+  /* app colours (Orbit's tags), tuned for the night sky */
+  --wmm: #7fe0a8; --cal: #8fb4ff; --todo: #f5c26b; --fridge: #6fd6e6; --note: #f59ad0; --warn: #f5c26b;
+  --on-c: #0b0d22;
+  --script: "Josefin Sans", "Segoe UI", system-ui, sans-serif;
+  --ui: "Manrope", "Segoe UI", system-ui, sans-serif;
+  --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
+  --r: 20px; --gap: 16px;
+}
+:root[data-sky="night"]     { --sky-top:#010205; --sky-mid:#03060f; --sky-low:#07101e; --glow:rgba(70,110,170,.10); --glow-pos:85% -10%; }
+:root[data-sky="morning"]   { --sky-top:#02040a; --sky-mid:#081224; --sky-low:#18263c; --glow:rgba(255,170,120,.12); --glow-pos:50% 115%; }
+:root[data-sky="afternoon"] { --sky-top:#0c1a3d; --sky-mid:#16295a; --sky-low:#2b4580; --glow:rgba(150,200,255,.18); --glow-pos:80% -5%; }
+:root[data-sky="evening"]   { --sky-top:#03040c; --sky-mid:#0c1426; --sky-low:#2a2230; --glow:rgba(255,120,110,.18); --glow-pos:20% 115%; }
+* { box-sizing: border-box; }
+html { background: var(--sky-top); }
+html, body { height: 100%; }
+body { margin: 0; color: var(--ink); font: 17px/1.5 var(--body);
+  background: radial-gradient(90% 60% at var(--glow-pos), var(--glow) 0%, transparent 70%),
+              linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%) fixed;
+  transition: background 1s; }
+#stars { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.app { position: relative; z-index: 1; max-width: 580px; height: 100%; margin: 0 auto; display: flex; flex-direction: column;
+  padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+button { font: 700 .95rem var(--ui); cursor: pointer; color: var(--ink); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card { background: linear-gradient(160deg, var(--glass-hi), var(--glass)); border: 1px solid var(--edge); border-radius: var(--r);
+  padding: 14px 16px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .06); }
+.label { font-family: var(--ui); font-size: .72rem; text-transform: uppercase; letter-spacing: .22em; color: var(--soft); font-weight: 700; }
+.small { font-size: .85rem; color: var(--soft); }
+
+/* Header: Luna's glass banner + real moon */
+.top { position: relative; margin-top: 14px; border: 1px solid var(--edge); border-radius: 22px; overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: 14px 100px 14px 18px; min-height: 100px; display: flex; align-items: center; }
+.moon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 76px; height: 76px;
+  filter: drop-shadow(0 0 22px rgba(244, 236, 210, .22)); }
+.hello { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.brand { font-family: var(--script); font-weight: 200; font-size: 1.4rem; letter-spacing: .5em; text-transform: uppercase; line-height: 1; color: var(--moon); }
+.top h1 { margin: 0; font: 500 1.02rem/1.25 var(--ui); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta { font-family: var(--ui); font-size: .8rem; color: var(--soft); display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.meta .off { color: var(--accent); }
+.ava, .mode { display: none; }   /* Orbit's avatar + light/dark switch: Luna is one dark look */
+
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding-inline: 18px; margin-inline: -18px; margin-top: 8px;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px); mask-image: linear-gradient(180deg, transparent 0, #000 18px); }
+.done { margin-top: 16px; display: grid; gap: 10px; border-color: rgba(127,224,168,.28); background: rgba(127,224,168,.06); }
+.donehead { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: 0; padding: 0; color: inherit; text-align: left; }
+.donelist { display: grid; gap: 8px; }
+.done.shut .donelist { display: none; }
+.item { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; font-size: .95rem; }
+.item.gone span:nth-child(2) { text-decoration: line-through; color: var(--soft); }
+.dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: var(--on-c); background: var(--c); font-weight: 700; box-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
+.item .app { font-family: var(--ui); font-size: .8rem; color: var(--c); font-weight: 700; }
+.cal { --c: var(--cal); } .todo { --c: var(--todo); } .note { --c: var(--note); } .money { --c: var(--wmm); }
+.tag { display: inline-block; margin-left: 6px; font: 700 .78rem var(--ui); color: var(--on-c); background: var(--c); border-radius: 999px; padding: 2px 10px; vertical-align: 3px; }
+.pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 8px; }
+.trow { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); }
+.trow:first-of-type { border-top: 0; }
+.trow .t1 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 1rem; }
+.trow .t1 b { font-family: var(--ui); color: var(--ink); margin-right: 2px; }
+.trow .sub { font-size: .85rem; color: var(--soft); }
+.chip { font: 700 .75rem var(--ui); border-radius: 999px; padding: 2px 9px; background: rgba(255,255,255,.05); color: var(--soft); border: 1px solid var(--edge); }
+.chip.over { background: var(--red); color: var(--on-c); border-color: transparent; }
+.chip.today { background: var(--amber); color: var(--on-c); border-color: transparent; }
+.chip.tom { background: var(--accent); color: var(--on-c); border-color: transparent; }
+details.nrow { border-top: 1px solid var(--line); padding: 8px 0; font-size: 1rem; }
+details.nrow:first-of-type { border-top: 0; }
+details.nrow summary { cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px; list-style: none; }
+details.nrow summary::-webkit-details-marker { display: none; }
+details.nrow summary b { font-family: var(--ui); color: var(--ink); font-weight: 700; }
+details.nrow summary span { font-size: .8rem; color: var(--soft); }
+details.nrow .full { font-size: .9rem; color: var(--soft); padding-top: 4px; white-space: pre-wrap; }
+.mk { margin-top: 8px; font-size: .8rem; border: 1px solid var(--todo); color: var(--todo); background: rgba(245,194,107,.08); border-radius: 999px; padding: 5px 12px; }
+.pick button { font-size: .85rem; border: 1px solid var(--c); color: var(--c); background: rgba(255,255,255,.04); border-radius: 999px; padding: 6px 13px; }
+
+.log { display: flex; flex-direction: column; gap: var(--gap); padding-block: 18px; }
+.log > .label { display: flex; align-items: center; gap: 10px; align-self: stretch !important; }
+.log > .label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--edge), transparent); }
+.them { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; max-width: 94%; }
+.mini { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--moon);
+  background: radial-gradient(circle at 35% 30%, rgba(169,155,255,.35), rgba(108,92,231,.18)); border: 1px solid var(--edge); }
+.say { font-size: 1.12rem; line-height: 1.4; }
+.say.warn { color: var(--warn); font-size: 1rem; }
+.me { align-self: flex-end; max-width: 80%; padding: 10px 15px; border-radius: 18px 18px 4px 18px;
+  background: linear-gradient(135deg, rgba(169,155,255,.22), rgba(108,92,231,.16)); border: 1px solid rgba(169,155,255,.28); }
+.more { display: flex; gap: 8px; padding-top: 8px; }
+.more button { font-size: .85rem; border: 1px solid var(--edge); background: rgba(255,255,255,.04); border-radius: 12px; padding: 8px 14px; }
+.more button:hover { background: rgba(255,255,255,.08); }
+.more button:disabled { opacity: .45; cursor: default; }
+.info { margin-top: 10px; display: grid; gap: 6px; padding: 14px 16px; }
+.info .label { display: flex; align-items: center; gap: 8px; }
+.info .label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--accent)); box-shadow: 0 0 10px var(--c, var(--accent)); }
+.info .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; font-size: .97rem; font-variant-numeric: tabular-nums; padding: 2px 0; }
+.info .row span:last-child { font-family: var(--ui); font-size: .85rem; color: var(--accent); }
+.info .row b { font-family: var(--ui); color: var(--ink); }
+.think { display: flex; align-items: center; gap: 8px; min-height: 30px; font-family: var(--ui); font-size: .9rem; color: var(--accent); }
+.them.ringing .mini { box-shadow: 0 0 0 3px rgba(169,155,255,.15), 0 0 16px rgba(169,155,255,.5); }
+
+/* Send box: Luna's floating bar */
+.box { margin: 4px 0 calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  background: rgba(8, 10, 28, .85); border-radius: 18px; padding: 8px 8px 8px 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.box input { width: 100%; min-width: 0; font: inherit; font-size: 1.05rem; color: var(--ink); background: none; border: 0; padding: 6px 2px; }
+.box input::placeholder { color: #767b9e; }
+.box input:focus-visible { outline: none; }
+.box:focus-within { border-color: rgba(169,155,255,.5); box-shadow: 0 0 0 3px rgba(169,155,255,.15); }
+.send { height: 44px; border-radius: 12px; border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; padding: 0 20px; }
+.send:disabled { opacity: .5; }
+.orb { width: 100%; height: 100%; overflow: visible; }
+@media (prefers-reduced-motion: no-preference) {
+  .them.ringing .mini { animation: halo 2.2s ease-in-out infinite; }
+  @keyframes halo { 50% { box-shadow: 0 0 0 6px transparent, 0 0 22px rgba(169,155,255,.8); } }
+  .new { animation: up .3s ease-out; } @keyframes up { from { transform: translateY(8px); opacity: .3; } }
+}
+@media (max-width: 380px) { .top { padding-right: 88px; } .moon { width: 64px; height: 64px; right: 12px; } .brand { font-size: 1.2rem; letter-spacing: .42em; } }
+</style>
+
+<canvas id="stars" aria-hidden="true"></canvas>
+
+<div class="app">
+  <div class="top">
+    <div class="ava" aria-hidden="true" id="ava"></div>
+    <div class="hello">
+      <div class="brand">Luna</div>
+      <h1 id="hi">Hello, Darren</h1>
+      <div class="meta"><span class="off">Offline</span><span id="dateLabel"></span><span id="phaseName"></span></div>
+    </div>
+    <canvas class="moon" id="moon" aria-hidden="true"></canvas>
+    <button class="mode" id="mode" type="button" aria-label="Light or dark">Auto</button>
+  </div>
+
+  <div class="scroll" id="scroll">
+    <div class="card done" id="done">
+      <button class="donehead" id="donehead" type="button" aria-expanded="true" aria-controls="donelist"><span class="label">Just done for you</span><span class="small" id="donecount">0 ▾</span></button>
+      <div class="donelist" id="donelist"><span class="small" id="noneyet">Nothing yet. Try "dentist tuesday 3pm" or "buy bin bags".</span></div>
+    </div>
+    <div class="log" id="log" aria-live="polite">
+      <div class="label" style="align-self:center">Coming up</div>
+    </div>
+  </div>
+
+  <form class="card box" id="box">
+    <input type="text" id="text" placeholder="Tell Luna… e.g. £12 Tesco" aria-label="Message" autocomplete="off">
+    <button class="send" id="sendbtn" type="submit">Send</button>
+  </form>
+</div>
+
+<script>
+// ---------- Luna's look (sky, stars, moon). Look only: none of Orbit's logic lives here. ----------
+let starLevel = 1;
+const STARS = { night: 1.0, morning: 0.75, afternoon: 0.25, evening: 0.6 };
+function skyFor(h) { return h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night'; }
+function setSky(name) { document.documentElement.dataset.sky = name; starLevel = STARS[name]; }
+setSky(skyFor(new Date().getHours()));
+setInterval(() => setSky(skyFor(new Date().getHours())), 5 * 60 * 1000);
+document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+// Moving starfield: twinkle, slow drift, the odd shooting star
+(function () {
+  const c = document.getElementById('stars'), x = c.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W, H, d, stars = [], shoot = null, level = starLevel;
+  function build() {
+    d = window.devicePixelRatio || 1;
+    W = c.width = innerWidth * d; H = c.height = innerHeight * d;
+    const n = Math.round(innerWidth * innerHeight / 5000);
+    stars = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: (0.25 + Math.random() ** 3 * 1.4) * d,
+      a: 0.2 + Math.random() * 0.7,
+      tw: 0.4 + Math.random() * 1.6, ph: Math.random() * 6.28,
+      z: 0.2 + Math.random() * 0.8,
+      tint: Math.random() > 0.88 ? '#cdd6ff' : Math.random() > 0.94 ? '#ffe2c4' : '#ffffff',
+    }));
+  }
+  function frame(t) {
+    level += (starLevel - level) * 0.04;
+    x.clearRect(0, 0, W, H);
+    const s = t / 1000;
+    for (const p of stars) {
+      if (!still) { p.x -= 0.07 * p.z * d; p.y += 0.022 * p.z * d; if (p.x < -2) p.x = W + 2; if (p.y > H + 2) p.y = -2; }
+      const tw = still ? 1 : 0.65 + 0.35 * Math.sin(s * p.tw + p.ph);
+      x.globalAlpha = p.a * tw * level;
+      x.fillStyle = p.tint;
+      x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.283); x.fill();
+    }
+    if (!still) {
+      if (!shoot && Math.random() < 0.0025 * level) {
+        shoot = { x: Math.random() * W * 0.8 + W * 0.2, y: Math.random() * H * 0.35, life: 0 };
+      }
+      if (shoot) {
+        shoot.life += 1;
+        const k = shoot.life / 60, len = 120 * d;
+        const hx = shoot.x - k * 420 * d, hy = shoot.y + k * 180 * d;
+        const g = x.createLinearGradient(hx, hy, hx + len, hy - len * 0.43);
+        g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        x.globalAlpha = Math.sin(Math.PI * k) * level;
+        x.strokeStyle = g; x.lineWidth = 1.4 * d;
+        x.beginPath(); x.moveTo(hx, hy); x.lineTo(hx + len, hy - len * 0.43); x.stroke();
+        if (shoot.life >= 60) shoot = null;
+      }
+      requestAnimationFrame(frame);
+    }
+  }
+  build(); addEventListener('resize', () => { build(); if (still) frame(0); });
+  requestAnimationFrame(frame);
+})();
+
+// Moon: realistic render with the real phase for the briefing date
+(function () {
+  const date = new Date();
+  const ref = Date.UTC(2000, 0, 6, 18, 14);        // known new moon
+  const f = ((((date - ref) / 86400000) % 29.530589) + 29.530589) % 29.530589 / 29.530589;  // 0 new, .5 full
+  const names = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
+  document.getElementById('phaseName').textContent = names[Math.round(f * 8) % 8];
+
+  const cv = document.getElementById('moon');
+  const S = Math.round(96 * Math.min(devicePixelRatio || 1, 3));
+  cv.width = cv.height = S;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(S, S), px = img.data;
+  // seeded value noise, wraps in x so the surface map has no seam
+  let seed = 42; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const G = 64, grid = Array.from({ length: G * G }, rnd);
+  const sm = t => t * t * (3 - 2 * t);
+  function noise(x, y, P) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi);
+    const g = (a, b) => grid[((b % G + G) % G) * G + ((a % P + P) % P)];
+    return (g(xi, yi) * (1 - xf) + g(xi + 1, yi) * xf) * (1 - yf) + (g(xi, yi + 1) * (1 - xf) + g(xi + 1, yi + 1) * xf) * yf;
+  }
+  const fbm = (x, y) => noise(x, y, 8) * .5 + noise(x * 2, y * 2, 16) * .25 + noise(x * 4, y * 4, 32) * .125 + noise(x * 8, y * 8, 64) * .0625;
+  const unit = (x, y) => [x, y, Math.sqrt(Math.max(0, 1 - x * x - y * y))];
+  // near-side maria (x right, y up on the sphere), far side mostly highlands
+  const maria = [[-.38,.38,.27],[.12,.36,.17],[.3,.08,.2],[.62,.25,.12],[.5,-.15,.15],[.38,-.32,.1],[-.2,-.36,.17],[-.6,.02,.3],[-.48,-.3,.16],[-.05,.62,.28]]
+    .map(([x, y, r]) => [...unit(x, y), r]);
+  const craters = Array.from({ length: 150 }, () => {
+    const zz = rnd() * 2 - 1, t = rnd() * 6.283, q = Math.sqrt(1 - zz * zz);
+    return [q * Math.sin(t), zz, q * Math.cos(t), .015 + rnd() ** 2 * .08];
+  });
+  const ty = unit(-.15, -.66); craters.push([...ty, .05]);   // Tycho
+  const e1 = [ty[2], 0, -ty[0]], n1 = Math.hypot(...e1); e1.forEach((v, k) => e1[k] = v / n1);
+  const e2 = [ty[1] * e1[2] - ty[2] * e1[1], ty[2] * e1[0] - ty[0] * e1[2], ty[0] * e1[1] - ty[1] * e1[0]];
+  // bake a surface map once (longitude x latitude), then spin it each frame
+  const TW = 512, TH = 256, tex = new Float32Array(TW * TH);
+  for (let v = 0; v < TH; v++) for (let u = 0; u < TW; u++) {
+    const lon = (u / TW - .5) * 6.2832, lat = (.5 - (v + .5) / TH) * Math.PI;
+    const X = Math.cos(lat) * Math.sin(lon), Y = Math.sin(lat), Z = Math.cos(lat) * Math.cos(lon);
+    const fx = u / TW * 8, fy = v / TH * 4;
+    let a = .78 + (fbm(fx + .3, fy + 3) - .5) * .25, m = 0;
+    for (const [mx, my, mz, mr] of maria) {
+      const d = Math.hypot(X - mx, Y - my, Z - mz) / (mr * (.8 + .5 * fbm(fx * 2 + mx * 9, fy * 2)));
+      m = Math.max(m, 1 - sm(Math.min(1, Math.max(0, (d - .6) / .5))));
+    }
+    a -= m * .36;
+    for (const [cx, cy, cz, cr] of craters) {
+      const d = Math.hypot(X - cx, Y - cy, Z - cz) / cr;
+      if (d < 1.1) a += d < .85 ? -.045 * (1 - m * .5) * (1 - d * .6) : .045 * (1 - Math.abs(d - .95) * 6);
+    }
+    const dx = X - ty[0], dy = Y - ty[1], dz = Z - ty[2], td = Math.hypot(dx, dy, dz);
+    if (td > .05 && td < .9) {
+      const ang = Math.atan2(dx * e2[0] + dy * e2[1] + dz * e2[2], dx * e1[0] + dy * e1[1] + dz * e1[2]);
+      a += Math.max(0, Math.sin(ang * 9 + 1) ** 24) * .12 * (1 - td);
+    }
+    tex[v * TW + u] = a;
+  }
+  // light comes from the real phase, so the shadow stays true while the surface turns
+  const fl = Math.min(.87, Math.max(.13, f));   // always keep a thin crescent visible
+  const th = 2 * Math.PI * fl, Lx = Math.sin(th), Lz = -Math.cos(th);
+  function draw(rot) {
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+      const x = (i + .5) / S * 2 - 1, y = (j + .5) / S * 2 - 1, r2 = x * x + y * y;
+      const o = (j * S + i) * 4;
+      if (r2 > 1) { px[o + 3] = 0; continue; }
+      const z = Math.sqrt(1 - r2);
+      let lu = (Math.atan2(x, z) + rot) / 6.2832 + .5; lu -= Math.floor(lu);
+      const lv = .5 - Math.asin(-y) / Math.PI;
+      const a = tex[Math.min(TH - 1, lv * TH | 0) * TW + (lu * TW | 0) % TW];
+      const ndl = x * Lx + z * Lz;
+      const day = sm(Math.min(1, Math.max(0, (ndl + .04) / .14)));
+      const lit = a * day * (.45 + .55 * Math.max(0, ndl)) * (.8 + .2 * z) * 1.3;
+      const glow = (1 - day) * (.06 + a * .07 + .08 * (1 - z) ** 3);   // soft earthshine + rim on the dark side
+      px[o]     = Math.min(255, lit * 255 + glow * 190);
+      px[o + 1] = Math.min(255, lit * 247 + glow * 205);
+      px[o + 2] = Math.min(255, lit * 228 + glow * 235);
+      px[o + 3] = 255 * Math.min(1, (1 - Math.sqrt(r2)) * S * .5);
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  draw(0);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const t0 = performance.now(); let last = 0;
+    (function spin(t) {
+      if (t - last > 60) { last = t; draw((t - t0) / 1000 * 6.2832 / 90); }   // one turn every 90s
+      requestAnimationFrame(spin);
+    })(t0);
+  }
+})();
+</script>
+
+<script>
+(function () {
+  const CAL = 'Google Calendar', TN = 'TaskNotes', WMM = "Where's My Money";
+  const APPS = {
+    calendar: { cls: 'cal', name: 'Diary', where: 'Google Calendar' },
+    task: { cls: 'todo', name: 'To-do', where: 'TaskNotes' },
+    note: { cls: 'note', name: 'Note', where: 'TaskNotes' },
+    money: { cls: 'money', name: 'Money', where: "Where's My Money" },
+  };
+  const gbp = n => '£' + Number(n).toFixed(2).replace(/\.00$/, '');
+  const $ = id => document.getElementById(id), root = document.documentElement;
+  const log = $('log'), scroller = $('scroll');
+  const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
+  // icon only (look): Orbit's orbit-ring icon swapped for Luna's crescent moon with one star circling it
+  const ORB = l => `<svg class="orb" viewBox="0 0 40 40" aria-hidden="true"><path d="M24 9a12 12 0 1 0 8 20.5A10 10 0 0 1 24 9z" fill="var(--moon)" opacity=".95"/><circle r="1.6" fill="var(--accent)"><animateMotion dur="9s" repeatCount="indefinite" path="M4,20 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"/></circle></svg>`;
+  $('ava').innerHTML = ORB('D');
+  const h = new Date().getHours();
+  $('hi').textContent = `${h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening'}, Darren`;
+  if (matchMedia('(prefers-reduced-motion: reduce)').matches) setTimeout(() => document.querySelectorAll('svg.orb').forEach(x => x.pauseAnimations && x.pauseAnimations()), 0);
+
+  // light / dark, remembered on this phone only
+  const keep = { get(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch (e) {} } };
+  const modes = ['auto', 'light', 'dark'];
+  function setMode(m) { m === 'auto' ? root.removeAttribute('data-theme') : root.setAttribute('data-theme', m);
+    $('mode').textContent = m[0].toUpperCase() + m.slice(1); keep.set('orbit_mode', m); }
+  $('mode').onclick = () => setMode(modes[(modes.indexOf(keep.get('orbit_mode') || 'auto') + 1) % 3]);
+  setMode(keep.get('orbit_mode') || 'auto');
+
+  // ---------- dates ----------
+  const pad = n => String(n).padStart(2, '0');
+  const ymd = d => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  const localIso = d => `${ymd(d)}T${pad(d.getHours())}:${pad(d.getMinutes())}:00`;
+  const DAYS = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+  function nextDay(dateStr) { const d = new Date(dateStr + 'T12:00:00'); d.setDate(d.getDate() + 1); return ymd(d); }
+  function addMins(time, m) { const [hh, mm] = time.split(':').map(Number); const t = hh * 60 + mm + m; return `${pad(Math.floor(t / 60) % 24)}:${pad(t % 60)}`; }
+  function niceDay(dateStr) {
+    const today = ymd(new Date()), tom = nextDay(today);
+    if (dateStr === today) return 'today'; if (dateStr === tom) return 'tomorrow';
+    const d = new Date(dateStr + 'T12:00:00'); return DAYS[d.getDay()].slice(0, 3) + ' ' + d.getDate();
+  }
+  function evWhen(ev) {
+    if (ev.start?.date) return niceDay(ev.start.date) + ', all day';
+    const d = new Date(ev.start?.dateTime);
+    return niceDay(ymd(d)) + ' ' + d.toLocaleTimeString('en-GB', { hour: 'numeric', minute: '2-digit' }).replace(':00', '');
+  }
+
+  // ---------- chat bits ----------
+  function bubble(t) { log.insertAdjacentHTML('beforeend', `<div class="me new">${esc(t)}</div>`); down(); }
+  function down() { scroller.scrollTop = scroller.scrollHeight; }
+  function orbitSays() {
+    const el = document.createElement('div'); el.className = 'them new ringing';
+    el.innerHTML = `<div class="mini" aria-hidden="true">${ORB('O')}</div><div class="body"><div class="think">Thinking…</div></div>`;
+    log.append(el); down();
+    return {
+      el,
+      doing(t) { el.classList.add('ringing'); el.querySelector('.body').innerHTML = `<div class="think">${esc(t)}</div>`; down(); },
+      say(t, extra, warn) { el.classList.remove('ringing'); el.querySelector('.body').innerHTML = `<div class="say${warn ? ' warn' : ''}">${esc(t)}</div>${extra || ''}`; down(); return el; },
+      sayHtml(html, extra) { el.classList.remove('ringing'); el.querySelector('.body').innerHTML = `<div class="say">${html}</div>${extra || ''}`; down(); return el; },
+    };
+  }
+
+  // one place that turns an error code into words Darren can act on
+  function trouble(e, where) {
+    const c = e && e.code;
+    if (c === 'needs_reauth') return `${where} needs signing in again: claude.ai Settings → Connectors.`;
+    if (c === 'server_not_connected' || c === 'server_not_found') return `${where} isn't connected. Add it in claude.ai Settings → Connectors.`;
+    if (c === 'selection_required') return `You have two ${where} connectors. Pick one when claude.ai asks, then try again.`;
+    if (c === 'not_in_manifest' || c === 'approval_required' || c === 'consent_required') return `Orbit isn't allowed to use ${where} yet. Allow it when asked, then try again.`;
+    if (c === 'not_granted' || c === 'sampling_disabled') return `Orbit isn't allowed to think with Claude here. Allow it when asked, then reload.`;
+    if (c === 'rate_limited') return 'Too many at once. Give it a minute.';
+    if (c === 'server_unavailable' || c === 'upstream_error') return `${where} didn't answer. It may or may not have gone in, so check before sending again.`;
+    if (c === 'tool_error') return `${where} said no: ${e.message}`;
+    if (c === 'invalid_json') return "I couldn't work that one out. Try saying it a bit differently.";
+    return `Something went wrong with ${where}${e && e.message ? ': ' + e.message : ''}.`;
+  }
+
+  // ---------- just done (with Undo), remembered on this phone ----------
+  let done = [];
+  try { done = JSON.parse(keep.get('orbit_done') || '[]'); } catch (e) { done = []; }
+  done.forEach(d => { if (d.kind === 'cal') d.kind = 'calendar'; });
+  function saveDone() { done = done.slice(0, 20); keep.set('orbit_done', JSON.stringify(done)); }
+  function renderDone() {
+    const list = $('donelist'); list.innerHTML = '';
+    if (!done.length) list.innerHTML = '<span class="small">Nothing yet. Try "dentist tuesday 3pm", "buy bin bags" or "note: ...".</span>';
+    done.forEach(d => { const A = APPS[d.kind] || APPS.task; list.insertAdjacentHTML('beforeend',
+      `<div class="item ${A.cls}${d.undone ? ' gone' : ''}"><span class="dot">${d.undone ? '↺' : '✓'}</span><span>${esc(d.label)}</span><span class="app">${A.name}</span></div>`); });
+    $('donecount').textContent = done.length + ($('done').classList.contains('shut') ? ' ▸' : ' ▾');
+  }
+  function fold(shut) { $('done').classList.toggle('shut', shut); $('donehead').setAttribute('aria-expanded', String(!shut)); renderDone(); }
+  $('donehead').onclick = () => fold(!$('done').classList.contains('shut'));
+  renderDone();
+
+  // ---------- capabilities light up when ready ----------
+  let mcp = null, sample = null, db = null;
+  const ready = Promise.all([
+    window.claude?.use('mcp').then(x => { mcp = x; }),
+    window.claude?.use('sample').then(x => { sample = x; }),
+    window.claude?.use('db').then(x => { db = x; }),
+  ].filter(Boolean));
+
+  // ---------- learning log: Darren's fixes, read before every guess ----------
+  async function lessons() {
+    if (!db) return [];
+    try {
+      const snap = await Promise.race([db.collection('learning').orderBy('at', 'desc').limit(30).get(),
+        new Promise((_, no) => setTimeout(() => no('slow'), 4000))]);
+      return snap.docs.map(d => d.data()).filter(Boolean);
+    } catch (e) { return []; }
+  }
+  // the full log: every message + what happened (kept / undo / moved / also). Training data for later.
+  function logIt(row) {
+    if (!db) return Promise.resolve(null);
+    const ref = db.collection('log').doc();
+    return ref.set({ ...row, at: new Date().toISOString() }).then(() => ref, () => null);
+  }
+  function mark(refP, patch) { Promise.resolve(refP).then(ref => ref && ref.update({ ...patch, changed: new Date().toISOString() })).catch(() => {}); }
+  async function learn(row) {
+    if (!db) return false;
+    try { await db.collection('learning').add({ ...row, at: new Date().toISOString() }); return true; } catch (e) { return false; }
+  }
+
+  // ---------- coming up / reading ----------
+  function tnText(r) { return String(r.payload ?? (r.content?.[0]?.text || '')); }
+  // ---------- card recipes (see orbit/apps/*.md) ----------
+  const strip = l => l.replace(/^- \[([^\]]+)\]\s*/, '');
+  const idOf = l => (l.match(/^- \[([^\]]+)\]/) || [])[1] || '';
+  function taskRow(line) {
+    const [title, , when = '', ...rest] = strip(line).split(' | ');
+    const time = rest.find(x => /^\d+h|^\d+m$|^\d+h \d+m$/.test(x)) || '';
+    const notes = (rest.find(x => x.startsWith('📝')) || '').replace(/^📝\s*/, '');
+    let chip = '';
+    if (when.startsWith('OVERDUE')) chip = `<span class="chip over">overdue ${esc(niceDay(when.replace('OVERDUE, was ', '')))}</span>`;
+    else if (when === 'today') chip = '<span class="chip today">today</span>';
+    else if (when === 'tomorrow') chip = '<span class="chip tom">tomorrow</span>';
+    else if (/^\d{4}-/.test(when)) chip = `<span class="chip">${esc(niceDay(when))}</span>`;
+    return `<div class="trow"><div class="t1"><b>${esc(title)}</b>${chip}${time ? `<span class="chip">⏱ ${esc(time)}</span>` : ''}</div>${notes ? `<div class="sub">${esc(notes)}</div>` : ''}</div>`;
+  }
+  const DATEY = /\b(\d{1,2}(st|nd|rd|th)? (jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)|\d{1,2}(:\d\d)? ?(am|pm)|mon(day)?|tue(s|sday)?|wed(nesday)?|thu(rs|rsday)?|fri(day)?|sat(urday)?|sun(day)?|tomorrow|tonight)\b/i;
+  function noteRow(line) {
+    const id = idOf(line), parts = strip(line).split(' | ');
+    const cat = parts.length > 1 ? parts.pop() : '';
+    const text = parts.join(' | ').replace(/^🔖\s*/, '');
+    let first = text.split(/(?<=[.:!?])\s/)[0];
+    if (first.length > 70) first = first.slice(0, 67) + '…';
+    const rest = text.length > first.length ? text : '';
+    return `<details class="nrow"><summary><b>${esc(first)}</b><span>${esc(cat)}</span></summary>${rest ? `<div class="full">${esc(text)}</div>` : ''}${
+      DATEY.test(text) ? `<button type="button" class="mk" data-id="${esc(id)}" data-title="${esc(first.replace(/…$/, ''))}" data-text="${esc(text)}">Make it a task?</button>` : ''}</details>`;
+  }
+  log.addEventListener('click', async e => {
+    const b = e.target.closest('.mk'); if (!b || !mcp) return;
+    b.disabled = true; b.textContent = 'Adding…';
+    try {
+      const r = tnText(await mcp.callTool(TN, 'add_task', { title: b.dataset.title.slice(0, 120), details: b.dataset.text.slice(0, 2000) }));
+      const id = (r.match(/\[([^\]]+)\]/) || [])[1] || '';
+      done.unshift({ kind: 'task', id, label: b.dataset.title.slice(0, 60) }); saveDone(); renderDone();
+      logIt({ msg: '(made a task from a note)', picked: 'task', status: 'kept', from: 'note' });
+      b.textContent = 'Now a task ✓ (add a date in TaskNotes)';
+    } catch (err) { b.disabled = false; b.textContent = 'Make it a task?'; b.insertAdjacentHTML('afterend', `<div class="small">${esc(trouble(err, 'TaskNotes'))}</div>`); }
+  });
+
+  async function show(about, o, f) {
+    about = about || 'all'; f = f || {};
+    if (!mcp) return o.say("I can't reach your apps from here. Open me in claude.ai.", '', true);
+    o.doing('Having a look…');
+    const now = new Date(), week = new Date(now); week.setDate(week.getDate() + 7);
+    const want = { diary: about === 'all' || about === 'diary', tasks: about === 'all' || about === 'tasks', notes: about === 'notes', money: about === 'money' };
+    const [cal, tn, nt, mo] = await Promise.allSettled([
+      want.diary ? mcp.callTool(CAL, 'list_events', { startTime: localIso(now), endTime: localIso(week), orderBy: 'startTime', pageSize: 6 }) : null,
+      want.tasks ? mcp.callTool(TN, 'day_summary', {}) : null,
+      want.notes ? mcp.callTool(TN, 'list_notes', { ...(f.category ? { category: f.category } : {}), ...(f.search ? { search: f.search } : {}) }) : null,
+      want.money ? mcp.callTool(WMM, 'money_summary', {}) : null,
+    ]);
+    let card = '', bits = [];
+    if (want.diary) {
+      if (cal.status === 'fulfilled') {
+        const evs = (cal.value.payload && cal.value.payload.events) || [];
+        bits.push(evs.length ? `${evs.length} thing${evs.length > 1 ? 's' : ''} in the diary this week` : 'nothing in the diary this week');
+        if (evs.length) card += `<div class="card info cal"><div class="label">Diary, next 7 days</div>${evs.map(ev => `<div class="row"><b>${esc(ev.summary || '(no title)')}</b><span>${esc(evWhen(ev))}</span></div>`).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(cal.reason, 'Google Calendar'))}</div>`;
+    }
+    if (want.tasks) {
+      if (tn.status === 'fulfilled') {
+        const txt = tnText(tn.value);
+        const n = (txt.match(/(\d+) task\(s\) due or overdue/) || [])[1];
+        const lines = txt.split('\n').filter(l => l.startsWith('- [')).slice(0, 6);
+        if (n != null) bits.push(n === '0' ? 'nothing due on your list' : `${n} task${n === '1' ? '' : 's'} due`);
+        if (lines.length) card += `<div class="card info todo"><div class="label">To-do, due now</div>${lines.map(taskRow).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(tn.reason, 'TaskNotes'))}</div>`;
+    }
+    if (want.notes) {
+      if (nt.status === 'fulfilled') {
+        const all = tnText(nt.value).split('\n').filter(l => l.startsWith('- ['));
+        const lines = all.slice(-5).reverse();
+        const what = f.category || f.search ? `notes${f.category ? ' in ' + f.category : ''}${f.search ? ' about "' + f.search + '"' : ''}` : 'notes';
+        bits.push(lines.length ? `your ${all.length > 5 ? '5 newest ' : ''}${what}. Tap one to open it` : `no ${what} found`);
+        if (lines.length) card += `<div class="card info note"><div class="label">${esc(what)}, newest first</div>${lines.map(noteRow).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(nt.reason, 'TaskNotes'))}</div>`;
+    }
+    if (want.money) {
+      if (mo.status === 'fulfilled') {
+        const L = tnText(mo.value).split('\n');
+        const row = (k, v) => `<div class="row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`;
+        const head = (L.find(l => l.startsWith('Spare cash')) || '').split(' · ').map(x => x.split(': ')).filter(x => x.length === 2);
+        const spare = (head.find(x => x[0].startsWith('Spare')) || [])[1];
+        const cardL = (L.find(l => l.startsWith('Credit card: ')) || '').replace('Credit card: ', '');
+        const pi = L.indexOf('Pots:'), pots = [];
+        if (pi >= 0) for (let i = pi + 1; i < L.length && L[i].startsWith('- '); i++) pots.push(L[i].slice(2).split(': '));
+        const unpaid = L.filter(l => /, not paid yet$/.test(l)).map(l => l.slice(2).replace(/, not paid yet$/, '').split(': '));
+        bits.push(spare ? `${spare} spare cash left` : 'here is your money');
+        card += `<div class="card info money"><div class="label">Money this month</div>${head.map(x => row(x[0], x[1])).join('')}${cardL ? row('Credit card', cardL) : ''}</div>`;
+        if (pots.length) card += `<div class="card info money"><div class="label">Pots</div>${pots.map(x => row(x[0], x[1] || '')).join('')}</div>`;
+        if (unpaid.length) card += `<div class="card info money"><div class="label">Bills still to go out</div>${unpaid.map(x => row(x[0], x[1] || '')).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(mo.reason, "Where's My Money"))}</div>`;
+    }
+    const line = bits.join(', ');
+    o.say(line ? line[0].toUpperCase() + line.slice(1) + '.' : 'Here is what I could find.', card);
+  }
+
+  // ---------- understand a message (Claude, quick) ----------
+  async function understand(t) {
+    const now = new Date();
+    const past = (await lessons()).filter(r => r.msg && r.right).slice(0, 20)
+      .map(r => `- "${String(r.msg).slice(0, 160)}" → ${r.right}${r.picked ? ` (NOT ${r.picked})` : ''}`).join('\n');
+    const prompt = `You are Orbit, Darren's assistant. Turn his short message into ONE action.
+Now: ${DAYS[now.getDay()]} ${ymd(now)} ${pad(now.getHours())}:${pad(now.getMinutes())} (UK time).
+
+Kinds:
+- "calendar": an appointment or event at a time or on a day (dentist tue 3pm, tennis tonight at 6).
+- "task": a to-do: something to do, buy, ring, fix, book (buy bin bags, ring the council friday).
+- "note": something to remember or jot down, an idea, info (note: wifi code is 1234, idea for the app...).
+- "money": money in Where's My Money: something he spent or bought (£12 Tesco), money still to come out, a new monthly bill, a credit card spend, or paying off the credit card.
+- "question": he asks what is on, what is due, what his notes say, if he is free, or how his money is (spare cash, bills, pots, card).
+- "other": anything else (fridge food). That app is not connected yet.
+
+MOST IMPORTANT: if he says where it goes ("add to notes", "in my diary", "calendar", "on my list", "to-do", "note"), ALWAYS use that kind, even if it looks like another kind. "money", "spent", "WMM", "bill", "on the card" mean money.
+${past ? `\nDarren's past corrections (follow these):\n${past}\n` : ''}
+Reply with only JSON like:
+{"kind":"calendar","title":"Dentist","text":"","date":"2026-11-10","time":"15:00","end":"","estimate_mins":0,"about":"","category":"","search":"","amount":0,"money_type":"","day":""}
+
+Rules:
+- title: short, starts with a capital, no date/time words, no "add to ..." words.
+- text: for a note, the note itself in full, without the "add to notes" words. Else "".
+- date: YYYY-MM-DD or "". A weekday means the next one coming (today only if the time has not passed). "tonight" = today.
+- time / end: 24h "HH:MM" or "". "3pm" = "15:00". Calendar with no time = all day (time "").
+- task date only if he gave one. estimate_mins only if he said how long, else 0.
+- about (question only): "diary", "tasks", "notes", "money" or "all".
+- amount (money only): pounds as a number (12.5). Else 0.
+- money_type (money only): "spend" (already paid from the bank), "upcoming" (still to come out of the bank), "bill" (new monthly bill), "card" (bought on the credit card), "paid_off" (paid money off the credit card). Default "spend".
+- day (bill only): day of the month 1-31, or "varies", or "".
+- For money, title = the shop or what it was (Tesco, Netflix), date = when (only if he said).
+- category (notes question only): one of Home, Work, AI Lab, Health if he names one ("project ideas" = AI Lab), else "".
+- search (notes question only): one word to look for if he asks about a topic, else "".
+
+Message: ${t}`;
+    return sample.json(prompt, { modelTier: 'quick', cache: false });
+  }
+
+  // ---------- do it ----------
+  async function add(kind, a, o) {
+    const A = APPS[kind];
+    if (kind === 'calendar') {
+      o.doing('Putting it in your diary…');
+      const allDay = !a.time, date = a.date || ymd(new Date());
+      const input = allDay
+        ? { summary: a.title, allDay: true, startTime: `${date}T00:00:00`, endTime: `${nextDay(date)}T00:00:00` }
+        : { summary: a.title, startTime: `${date}T${a.time}:00`, endTime: `${date}T${a.end || addMins(a.time, 60)}:00` };
+      const r = await mcp.callTool(CAL, 'create_event', input);
+      const p = r.payload || {};
+      const id = p.id || p.event?.id || (JSON.stringify(p).match(/"id"\s*:\s*"([^"]+)"/) || [])[1] || '';
+      const when = allDay ? niceDay(date) : niceDay(date) + ' ' + a.time;
+      return { kind, id, label: `${a.title}, ${when}`, say: `In the diary: ${a.title}, ${when}` };
+    }
+    if (kind === 'task') {
+      o.doing('Adding it to your list…');
+      const input = { title: a.title };
+      if (a.date) input.due = a.date;
+      if (a.estimate_mins > 0) input.estimate_mins = Number(a.estimate_mins);
+      const id = (tnText(await mcp.callTool(TN, 'add_task', input)).match(/\[([^\]]+)\]/) || [])[1] || '';
+      const when = a.date ? ', ' + niceDay(a.date) : '';
+      return { kind, id, label: a.title + when, say: `On your list: ${a.title}${when}` };
+    }
+    if (kind === 'money') {
+      const amt = Number(a.amount);
+      if (!(amt > 0)) throw { code: 'tool_error', message: "I couldn't see an amount (£) in that." };
+      const type = ['spend', 'upcoming', 'bill', 'card', 'paid_off'].includes(a.money_type) ? a.money_type : 'spend';
+      o.doing("Putting it in Where's My Money…");
+      const when = a.date ? ', ' + niceDay(a.date) : '';
+      let r, label, say;
+      if (type === 'bill') {
+        const day = /^([1-9]|[12]\d|3[01])$/.test(String(a.day)) ? Number(a.day) : (a.day === 'varies' ? 'varies' : undefined);
+        r = await mcp.callTool(WMM, 'add_bill', { amount: amt, name: a.title, ...(day != null ? { day } : {}) });
+        label = `${gbp(amt)} ${a.title}, monthly`; say = `New bill: ${a.title}, ${gbp(amt)}${day != null ? (day === 'varies' ? ', day varies' : ', day ' + day) : ''}`;
+      } else if (type === 'card') {
+        r = await mcp.callTool(WMM, 'card_spend', { amount: amt, name: a.title, ...(a.date ? { date: a.date } : {}) });
+        label = `${gbp(amt)} ${a.title} on the card`; say = `On the credit card: ${gbp(amt)} ${a.title}${when}`;
+      } else if (type === 'paid_off') {
+        r = await mcp.callTool(WMM, 'card_paid_off', { amount: amt, ...(a.date ? { date: a.date } : {}) });
+        label = `${gbp(amt)} paid off the card`; say = `Paid off the credit card: ${gbp(amt)}${when}`;
+      } else {
+        const up = type === 'upcoming';
+        r = await mcp.callTool(WMM, 'add_spend', { amount: amt, name: a.title, ...(a.date ? { date: a.date } : {}), ...(up ? { upcoming: true } : {}) });
+        label = `${gbp(amt)} ${a.title}${up ? ', to come out' : ''}`; say = `${up ? 'Still to come out' : 'Spent'}: ${gbp(amt)} ${a.title}${when}`;
+      }
+      const id = (tnText(r).match(/\bid (c-[\w-]+)/) || [])[1] || '';
+      return { kind, id, label, say: say + ' (shows when you next open the app)' };
+    }
+    o.doing('Writing it in your notes…');
+    const text = a.text || a.title;
+    const id = (tnText(await mcp.callTool(TN, 'add_note', { text })).match(/\[([^\]]+)\]/) || [])[1] || '';
+    return { kind, id, label: text.length > 60 ? text.slice(0, 57) + '…' : text, say: `In your notes: ${text}` };
+  }
+  async function remove(d) {
+    if (!d.id) throw { code: 'tool_error', message: "I didn't get an id back, so remove it by hand." };
+    if (d.kind === 'calendar') await mcp.callTool(CAL, 'delete_event', { eventId: d.id });
+    else if (d.kind === 'money') await mcp.callTool(WMM, 'remove_added', { id: d.id });
+    else await mcp.callTool(TN, 'delete_item', { id: d.id });
+    d.undone = true; saveDone(); renderDone();
+  }
+
+  // show a finished job: what + where (coloured app tag), then Undo and Wrong app
+  function receipt(o, d, msg, a) {
+    const A = APPS[d.kind];
+    const el = o.sayHtml(`${esc(d.say)} ✓ <span class="tag ${A.cls}">${A.name}</span>`,
+      `<div class="more"><button type="button" data-do="undo">Undo</button><button type="button" data-do="wrong">Wrong app?</button></div><div class="fix"></div>`);
+    const btns = el.querySelectorAll('.more button'), fix = el.querySelector('.fix');
+    const note = (t) => { fix.innerHTML = `<div class="small" style="padding-top:6px">${esc(t)}</div>`; down(); };
+    btns[0].onclick = async () => {
+      btns.forEach(b => b.disabled = true); btns[0].textContent = 'Undoing…';
+      try { await remove(d); mark(d.logRef, { status: 'undo' }); btns[0].textContent = 'Undone ✓'; if (d.kind === 'money') note("Taken back. Where's My Money updates next time you open it."); else if (d.kind !== 'calendar') note('Crossed out in TaskNotes. Confirm the delete there.'); }
+      catch (e) { btns.forEach(b => b.disabled = false); btns[0].textContent = 'Undo'; note(trouble(e, A.where)); }
+    };
+    btns[1].onclick = () => {
+      const others = Object.keys(APPS).filter(k => k !== d.kind);
+      fix.innerHTML = `<div class="pick"><span class="small">Move to:</span>${others.map(k => `<button type="button" class="${APPS[k].cls}" data-move="${k}">${APPS[k].name}</button>`).join('')}</div>
+        <div class="pick"><span class="small">Keep it and also add to:</span>${others.map(k => `<button type="button" class="${APPS[k].cls}" data-also="${k}">${APPS[k].name}</button>`).join('')}</div>`;
+      down();
+      fix.querySelectorAll('button').forEach(b => b.onclick = () => redo(b.dataset.move || b.dataset.also, !!b.dataset.move));
+    };
+    async function redo(kind, move) {
+      btns.forEach(b => b.disabled = true);
+      const o2 = orbitSays();
+      try {
+        if (move && !d.undone) { o2.doing('Taking it out of ' + A.name + '…'); await remove(d); btns[0].textContent = 'Moved'; }
+        const d2 = await add(kind, a, o2);
+        done.unshift({ kind: d2.kind, id: d2.id, label: d2.label }); saveDone(); renderDone();
+        mark(d.logRef, move ? { status: 'moved', right: kind } : { status: 'also', right: d.kind + ' + ' + kind });
+        d2.logRef = d.logRef;
+        const ok = await learn(move ? { msg, picked: d.kind, right: kind, how: 'moved' } : { msg, picked: d.kind, right: d.kind + ' + ' + kind, how: 'also' });
+        fix.innerHTML = `<div class="small" style="padding-top:6px">${ok ? 'Got it, I\'ll remember that. 🧠' : 'Done, but I couldn\'t save the lesson.'}</div>`;
+        receipt(o2, d2, msg, a);
+      } catch (e) { btns.forEach(b => b.disabled = false); o2.say(trouble(e, APPS[kind].where), '', true); }
+    }
+  }
+
+  let busy = false;
+  $('box').onsubmit = async e => {
+    e.preventDefault();
+    const t = $('text').value.trim(); if (!t || busy) return;
+    busy = true; $('sendbtn').disabled = true; $('text').value = '';
+    fold(true); bubble(t);
+    await ready;
+    const o = orbitSays();
+    try {
+      if (!sample || !mcp) { o.say("I can't reach Claude or your apps from here. Open me in claude.ai.", '', true); return; }
+      let a;
+      try { a = await understand(t); } catch (err) { o.say(trouble(err, 'Claude'), '', true); return; }
+      if (!a || typeof a !== 'object') { o.say("I couldn't work that one out. Try saying it differently.", '', true); return; }
+      a.title = String(a.title || t).slice(0, 120); a.text = String(a.text || '').slice(0, 2000);
+      a.date = /^\d{4}-\d\d-\d\d$/.test(a.date) ? a.date : '';
+      a.time = /^\d\d:\d\d$/.test(a.time) ? a.time : ''; a.end = /^\d\d:\d\d$/.test(a.end) ? a.end : '';
+      a.amount = Math.round((Number(String(a.amount ?? '').replace(/[£,]/g, '')) || 0) * 100) / 100; a.money_type = String(a.money_type || ''); a.day = String(a.day ?? '');
+      const cats = ['Home', 'Work', 'AI Lab', 'Health'];
+      if (a.kind === 'question') { logIt({ msg: t, picked: 'question', status: 'kept' }); return show(a.about, o, { category: cats.includes(a.category) ? a.category : '', search: String(a.search || '').slice(0, 40) }); }
+      if (!APPS[a.kind]) { logIt({ msg: t, picked: 'other', status: 'kept' }); o.say("That's one for Fridge. It's not hooked up yet, so for now I can do your diary, to-do list, notes and money."); return; }
+      let d;
+      try { d = await add(a.kind, a, o); } catch (err) { o.say(trouble(err, APPS[a.kind].where), '', true); return; }
+      done.unshift({ kind: d.kind, id: d.id, label: d.label }); saveDone(); renderDone();
+      d.logRef = logIt({ msg: t, picked: d.kind, status: 'kept' });
+      receipt(o, d, t, a);
+    } finally { busy = false; $('sendbtn').disabled = false; }
+  };
+
+  ready.then(() => show('all', orbitSays()));
+})();
+</script>
+<!-- ===== end of app/luna-offline.html ===== -->
+<script src="web/settings.js"></script>
+</body>
+</html>

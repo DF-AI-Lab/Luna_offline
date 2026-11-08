@@ -21,7 +21,7 @@
   - `web/connect.js` = Calendar, TaskNotes, WMM
   - `web/store.js` = memory (phone + Drive), `web/shim.js` = stands in for claude.ai
   - `web/settings.js` + `web/web.css` = ⚙ screen, lock wiring
-- `patches/` — the one-line server change TaskNotes needs
+- Servers: TaskNotes + WMM Workers accept sign-ins from df-ai-lab.github.io (pushed 8 Nov)
 - Tests: `node --test tests/brain.test.js` and `node tests/web.e2e.js`
 
 ## What changed vs Orbit

@@ -69,7 +69,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .item.gone span:nth-child(2) { text-decoration: line-through; color: var(--soft); }
 .dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: var(--on-c); background: var(--c); font-weight: 700; box-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
 .item .app { font-family: var(--ui); font-size: .8rem; color: var(--c); font-weight: 700; }
-.cal { --c: var(--cal); } .todo { --c: var(--todo); } .note { --c: var(--note); }
+.cal { --c: var(--cal); } .todo { --c: var(--todo); } .note { --c: var(--note); } .money { --c: var(--wmm); }
 .tag { display: inline-block; margin-left: 6px; font: 700 .78rem var(--ui); color: var(--on-c); background: var(--c); border-radius: 999px; padding: 2px 10px; vertical-align: 3px; }
 .pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 8px; }
 .trow { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); }
@@ -157,7 +157,7 @@ details.nrow .full { font-size: .9rem; color: var(--soft); padding-top: 4px; whi
   </div>
 
   <form class="card box" id="box">
-    <input type="text" id="text" placeholder="Tell Luna… e.g. dentist tue 3pm, note: …" aria-label="Message" autocomplete="off">
+    <input type="text" id="text" placeholder="Tell Luna… e.g. £12 Tesco" aria-label="Message" autocomplete="off">
     <button class="send" id="sendbtn" type="submit">Send</button>
   </form>
 </div>
@@ -315,12 +315,14 @@ document.getElementById('dateLabel').textContent = new Date().toLocaleDateString
 
 <script>
 (function () {
-  const CAL = 'Google Calendar', TN = 'TaskNotes';
+  const CAL = 'Google Calendar', TN = 'TaskNotes', WMM = "Where's My Money";
   const APPS = {
     calendar: { cls: 'cal', name: 'Diary', where: 'Google Calendar' },
     task: { cls: 'todo', name: 'To-do', where: 'TaskNotes' },
     note: { cls: 'note', name: 'Note', where: 'TaskNotes' },
+    money: { cls: 'money', name: 'Money', where: "Where's My Money" },
   };
+  const gbp = n => '£' + Number(n).toFixed(2).replace(/\.00$/, '');
   const $ = id => document.getElementById(id), root = document.documentElement;
   const log = $('log'), scroller = $('scroll');
   const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
@@ -476,11 +478,12 @@ document.getElementById('dateLabel').textContent = new Date().toLocaleDateString
     if (!mcp) return o.say("I can't reach your apps from here. Open me in claude.ai.", '', true);
     o.doing('Having a look…');
     const now = new Date(), week = new Date(now); week.setDate(week.getDate() + 7);
-    const want = { diary: about === 'all' || about === 'diary', tasks: about === 'all' || about === 'tasks', notes: about === 'notes' };
-    const [cal, tn, nt] = await Promise.allSettled([
+    const want = { diary: about === 'all' || about === 'diary', tasks: about === 'all' || about === 'tasks', notes: about === 'notes', money: about === 'money' };
+    const [cal, tn, nt, mo] = await Promise.allSettled([
       want.diary ? mcp.callTool(CAL, 'list_events', { startTime: localIso(now), endTime: localIso(week), orderBy: 'startTime', pageSize: 6 }) : null,
       want.tasks ? mcp.callTool(TN, 'day_summary', {}) : null,
       want.notes ? mcp.callTool(TN, 'list_notes', { ...(f.category ? { category: f.category } : {}), ...(f.search ? { search: f.search } : {}) }) : null,
+      want.money ? mcp.callTool(WMM, 'money_summary', {}) : null,
     ]);
     let card = '', bits = [];
     if (want.diary) {
@@ -508,6 +511,22 @@ document.getElementById('dateLabel').textContent = new Date().toLocaleDateString
         if (lines.length) card += `<div class="card info note"><div class="label">${esc(what)}, newest first</div>${lines.map(noteRow).join('')}</div>`;
       } else card += `<div class="small" style="margin-top:8px">${esc(trouble(nt.reason, 'TaskNotes'))}</div>`;
     }
+    if (want.money) {
+      if (mo.status === 'fulfilled') {
+        const L = tnText(mo.value).split('\n');
+        const row = (k, v) => `<div class="row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`;
+        const head = (L.find(l => l.startsWith('Spare cash')) || '').split(' · ').map(x => x.split(': ')).filter(x => x.length === 2);
+        const spare = (head.find(x => x[0].startsWith('Spare')) || [])[1];
+        const cardL = (L.find(l => l.startsWith('Credit card: ')) || '').replace('Credit card: ', '');
+        const pi = L.indexOf('Pots:'), pots = [];
+        if (pi >= 0) for (let i = pi + 1; i < L.length && L[i].startsWith('- '); i++) pots.push(L[i].slice(2).split(': '));
+        const unpaid = L.filter(l => /, not paid yet$/.test(l)).map(l => l.slice(2).replace(/, not paid yet$/, '').split(': '));
+        bits.push(spare ? `${spare} spare cash left` : 'here is your money');
+        card += `<div class="card info money"><div class="label">Money this month</div>${head.map(x => row(x[0], x[1])).join('')}${cardL ? row('Credit card', cardL) : ''}</div>`;
+        if (pots.length) card += `<div class="card info money"><div class="label">Pots</div>${pots.map(x => row(x[0], x[1] || '')).join('')}</div>`;
+        if (unpaid.length) card += `<div class="card info money"><div class="label">Bills still to go out</div>${unpaid.map(x => row(x[0], x[1] || '')).join('')}</div>`;
+      } else card += `<div class="small" style="margin-top:8px">${esc(trouble(mo.reason, "Where's My Money"))}</div>`;
+    }
     const line = bits.join(', ');
     o.say(line ? line[0].toUpperCase() + line.slice(1) + '.' : 'Here is what I could find.', card);
   }
@@ -524,13 +543,14 @@ Kinds:
 - "calendar": an appointment or event at a time or on a day (dentist tue 3pm, tennis tonight at 6).
 - "task": a to-do: something to do, buy, ring, fix, book (buy bin bags, ring the council friday).
 - "note": something to remember or jot down, an idea, info (note: wifi code is 1234, idea for the app...).
-- "question": he asks what is on, what is due, what his notes say, or if he is free.
-- "other": anything else (spending money, fridge food). Those apps are not connected yet.
+- "money": money in Where's My Money: something he spent or bought (£12 Tesco), money still to come out, a new monthly bill, a credit card spend, or paying off the credit card.
+- "question": he asks what is on, what is due, what his notes say, if he is free, or how his money is (spare cash, bills, pots, card).
+- "other": anything else (fridge food). That app is not connected yet.
 
-MOST IMPORTANT: if he says where it goes ("add to notes", "in my diary", "calendar", "on my list", "to-do", "note"), ALWAYS use that kind, even if it looks like another kind.
+MOST IMPORTANT: if he says where it goes ("add to notes", "in my diary", "calendar", "on my list", "to-do", "note"), ALWAYS use that kind, even if it looks like another kind. "money", "spent", "WMM", "bill", "on the card" mean money.
 ${past ? `\nDarren's past corrections (follow these):\n${past}\n` : ''}
 Reply with only JSON like:
-{"kind":"calendar","title":"Dentist","text":"","date":"2026-11-10","time":"15:00","end":"","estimate_mins":0,"about":"","category":"","search":""}
+{"kind":"calendar","title":"Dentist","text":"","date":"2026-11-10","time":"15:00","end":"","estimate_mins":0,"about":"","category":"","search":"","amount":0,"money_type":"","day":""}
 
 Rules:
 - title: short, starts with a capital, no date/time words, no "add to ..." words.
@@ -538,7 +558,11 @@ Rules:
 - date: YYYY-MM-DD or "". A weekday means the next one coming (today only if the time has not passed). "tonight" = today.
 - time / end: 24h "HH:MM" or "". "3pm" = "15:00". Calendar with no time = all day (time "").
 - task date only if he gave one. estimate_mins only if he said how long, else 0.
-- about (question only): "diary", "tasks", "notes" or "all".
+- about (question only): "diary", "tasks", "notes", "money" or "all".
+- amount (money only): pounds as a number (12.5). Else 0.
+- money_type (money only): "spend" (already paid from the bank), "upcoming" (still to come out of the bank), "bill" (new monthly bill), "card" (bought on the credit card), "paid_off" (paid money off the credit card). Default "spend".
+- day (bill only): day of the month 1-31, or "varies", or "".
+- For money, title = the shop or what it was (Tesco, Netflix), date = when (only if he said).
 - category (notes question only): one of Home, Work, AI Lab, Health if he names one ("project ideas" = AI Lab), else "".
 - search (notes question only): one word to look for if he asks about a topic, else "".
 
@@ -570,6 +594,31 @@ Message: ${t}`;
       const when = a.date ? ', ' + niceDay(a.date) : '';
       return { kind, id, label: a.title + when, say: `On your list: ${a.title}${when}` };
     }
+    if (kind === 'money') {
+      const amt = Number(a.amount);
+      if (!(amt > 0)) throw { code: 'tool_error', message: "I couldn't see an amount (£) in that." };
+      const type = ['spend', 'upcoming', 'bill', 'card', 'paid_off'].includes(a.money_type) ? a.money_type : 'spend';
+      o.doing("Putting it in Where's My Money…");
+      const when = a.date ? ', ' + niceDay(a.date) : '';
+      let r, label, say;
+      if (type === 'bill') {
+        const day = /^([1-9]|[12]\d|3[01])$/.test(String(a.day)) ? Number(a.day) : (a.day === 'varies' ? 'varies' : undefined);
+        r = await mcp.callTool(WMM, 'add_bill', { amount: amt, name: a.title, ...(day != null ? { day } : {}) });
+        label = `${gbp(amt)} ${a.title}, monthly`; say = `New bill: ${a.title}, ${gbp(amt)}${day != null ? (day === 'varies' ? ', day varies' : ', day ' + day) : ''}`;
+      } else if (type === 'card') {
+        r = await mcp.callTool(WMM, 'card_spend', { amount: amt, name: a.title, ...(a.date ? { date: a.date } : {}) });
+        label = `${gbp(amt)} ${a.title} on the card`; say = `On the credit card: ${gbp(amt)} ${a.title}${when}`;
+      } else if (type === 'paid_off') {
+        r = await mcp.callTool(WMM, 'card_paid_off', { amount: amt, ...(a.date ? { date: a.date } : {}) });
+        label = `${gbp(amt)} paid off the card`; say = `Paid off the credit card: ${gbp(amt)}${when}`;
+      } else {
+        const up = type === 'upcoming';
+        r = await mcp.callTool(WMM, 'add_spend', { amount: amt, name: a.title, ...(a.date ? { date: a.date } : {}), ...(up ? { upcoming: true } : {}) });
+        label = `${gbp(amt)} ${a.title}${up ? ', to come out' : ''}`; say = `${up ? 'Still to come out' : 'Spent'}: ${gbp(amt)} ${a.title}${when}`;
+      }
+      const id = (tnText(r).match(/\bid (c-[\w-]+)/) || [])[1] || '';
+      return { kind, id, label, say: say + ' (shows when you next open the app)' };
+    }
     o.doing('Writing it in your notes…');
     const text = a.text || a.title;
     const id = (tnText(await mcp.callTool(TN, 'add_note', { text })).match(/\[([^\]]+)\]/) || [])[1] || '';
@@ -578,6 +627,7 @@ Message: ${t}`;
   async function remove(d) {
     if (!d.id) throw { code: 'tool_error', message: "I didn't get an id back, so remove it by hand." };
     if (d.kind === 'calendar') await mcp.callTool(CAL, 'delete_event', { eventId: d.id });
+    else if (d.kind === 'money') await mcp.callTool(WMM, 'remove_added', { id: d.id });
     else await mcp.callTool(TN, 'delete_item', { id: d.id });
     d.undone = true; saveDone(); renderDone();
   }
@@ -591,7 +641,7 @@ Message: ${t}`;
     const note = (t) => { fix.innerHTML = `<div class="small" style="padding-top:6px">${esc(t)}</div>`; down(); };
     btns[0].onclick = async () => {
       btns.forEach(b => b.disabled = true); btns[0].textContent = 'Undoing…';
-      try { await remove(d); mark(d.logRef, { status: 'undo' }); btns[0].textContent = 'Undone ✓'; if (d.kind !== 'calendar') note('Crossed out in TaskNotes. Confirm the delete there.'); }
+      try { await remove(d); mark(d.logRef, { status: 'undo' }); btns[0].textContent = 'Undone ✓'; if (d.kind === 'money') note("Taken back. Where's My Money updates next time you open it."); else if (d.kind !== 'calendar') note('Crossed out in TaskNotes. Confirm the delete there.'); }
       catch (e) { btns.forEach(b => b.disabled = false); btns[0].textContent = 'Undo'; note(trouble(e, A.where)); }
     };
     btns[1].onclick = () => {
@@ -633,9 +683,10 @@ Message: ${t}`;
       a.title = String(a.title || t).slice(0, 120); a.text = String(a.text || '').slice(0, 2000);
       a.date = /^\d{4}-\d\d-\d\d$/.test(a.date) ? a.date : '';
       a.time = /^\d\d:\d\d$/.test(a.time) ? a.time : ''; a.end = /^\d\d:\d\d$/.test(a.end) ? a.end : '';
+      a.amount = Math.round((Number(String(a.amount ?? '').replace(/[£,]/g, '')) || 0) * 100) / 100; a.money_type = String(a.money_type || ''); a.day = String(a.day ?? '');
       const cats = ['Home', 'Work', 'AI Lab', 'Health'];
       if (a.kind === 'question') { logIt({ msg: t, picked: 'question', status: 'kept' }); return show(a.about, o, { category: cats.includes(a.category) ? a.category : '', search: String(a.search || '').slice(0, 40) }); }
-      if (!APPS[a.kind]) { logIt({ msg: t, picked: 'other', status: 'kept' }); o.say("That's one for Money or Fridge. They're not hooked up yet, so for now I can do your diary, to-do list and notes."); return; }
+      if (!APPS[a.kind]) { logIt({ msg: t, picked: 'other', status: 'kept' }); o.say("That's one for Fridge. It's not hooked up yet, so for now I can do your diary, to-do list, notes and money."); return; }
       let d;
       try { d = await add(a.kind, a, o); } catch (err) { o.say(trouble(err, APPS[a.kind].where), '', true); return; }
       done.unshift({ kind: d.kind, id: d.id, label: d.label }); saveDone(); renderDone();

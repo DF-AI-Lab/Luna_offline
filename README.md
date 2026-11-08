@@ -7,7 +7,7 @@
 
 ## Files
 - `app/luna-offline.html` — the app (one page)
-- `apps/*.md` — Orbit's app recipes (Diary, To-do, Notes)
+- `apps/*.md` — app recipes (Diary, To-do, Notes, Money)
 - `screenshots/` — Luna vs Luna Offline, phone size
 
 ## What changed vs Orbit
@@ -19,6 +19,10 @@
 ## Not changed (on purpose)
 - All JS logic, prompts, tools, database collections (`log`, `learning`)
 - Some messages inside the logic still say "Orbit"
+
+## Added after the reskin
+- **Money** (Where's My Money connector): spends, upcoming, bills, card spend, card paid off, with Undo
+- Ask "how's my money?" → spare cash, card, pots, bills still to go out
 
 ## Next (from Luna's plan)
 - Swap Claude for a free tiny offline model, API only as a capped backup

@@ -1,109 +1,148 @@
-<title>Orbit Agent</title>
+<title>Luna Offline</title>
 <meta name="claude:viewport-fit-sides" content="cover">
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&display=swap">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Josefin+Sans:wght@200&family=Manrope:wght@500;700&display=swap">
 <style>
-/* Orbit, live version: talks to Darren's real Google Calendar and TaskNotes. Same look as the 31 Oct mock. */
+/* Luna Offline = Orbit's brain (all the JS below is Orbit's, unchanged) wearing Luna's look:
+   deep-space sky that shifts with the time of day, moving stars, glass banner with the real moon,
+   glass cards, violet accents. Single dark look on purpose, like Luna. */
 :root {
-  --bg: #f1f2f4; --panel: #ffffff; --ink: #1c2024; --soft: #687079; --line: #dde0e4;
-  --accent: #7b5cf0; --accent-2: #5b3fd0; --accent-soft: #ece7fe; --on-accent: #ffffff;
-  --wmm: #1f9d55; --cal: #3b6fe0; --todo: #d48a00; --fridge: #0aa0b5; --note: #c0368a; --warn: #c2410c;
-  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  color-scheme: dark;
+  --sky-top: #010205; --sky-mid: #03060f; --sky-low: #07101e;
+  --glow: rgba(70, 110, 170, .10); --glow-pos: 85% -10%;
+  --glass: rgba(255, 255, 255, .04); --glass-hi: rgba(255, 255, 255, .075);
+  --edge: rgba(190, 200, 255, .14);
+  --ink: #f1f2ff; --soft: #a3a8c8; --line: rgba(190, 200, 255, .12);
+  --accent: #a99bff; --accent-2: #6c5ce7; --accent-soft: rgba(169, 155, 255, .12); --on-accent: #ffffff;
+  --moon: #f4ecd2; --red: #ff8a80; --amber: #f5c26b; --green: #7fe0a8;
+  /* app colours (Orbit's tags), tuned for the night sky */
+  --wmm: #7fe0a8; --cal: #8fb4ff; --todo: #f5c26b; --fridge: #6fd6e6; --note: #f59ad0; --warn: #f5c26b;
+  --on-c: #0b0d22;
+  --script: "Josefin Sans", "Segoe UI", system-ui, sans-serif;
+  --ui: "Manrope", "Segoe UI", system-ui, sans-serif;
   --body: "Atkinson Hyperlegible", "Segoe UI", system-ui, sans-serif;
-  --r: 18px; --gap: 14px;
+  --r: 20px; --gap: 16px;
 }
-@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
-  --bg: #131517; --panel: #1d2023; --ink: #eceef0; --soft: #9aa1a8; --line: #2c3034;
-  --accent: #a48cff; --accent-2: #8a70f0; --accent-soft: #241e3d; --on-accent: #0b1513;
-  --wmm: #4ccf86; --cal: #7fa3ff; --todo: #f2b84b; --fridge: #4fd0e0; --note: #f07cc0; --warn: #fb923c; color-scheme: dark } }
-:root[data-theme="dark"] {
-  --bg: #131517; --panel: #1d2023; --ink: #eceef0; --soft: #9aa1a8; --line: #2c3034;
-  --accent: #a48cff; --accent-2: #8a70f0; --accent-soft: #241e3d; --on-accent: #0b1513;
-  --wmm: #4ccf86; --cal: #7fa3ff; --todo: #f2b84b; --fridge: #4fd0e0; --note: #f07cc0; --warn: #fb923c; color-scheme: dark }
-
+:root[data-sky="night"]     { --sky-top:#010205; --sky-mid:#03060f; --sky-low:#07101e; --glow:rgba(70,110,170,.10); --glow-pos:85% -10%; }
+:root[data-sky="morning"]   { --sky-top:#02040a; --sky-mid:#081224; --sky-low:#18263c; --glow:rgba(255,170,120,.12); --glow-pos:50% 115%; }
+:root[data-sky="afternoon"] { --sky-top:#0c1a3d; --sky-mid:#16295a; --sky-low:#2b4580; --glow:rgba(150,200,255,.18); --glow-pos:80% -5%; }
+:root[data-sky="evening"]   { --sky-top:#03040c; --sky-mid:#0c1426; --sky-low:#2a2230; --glow:rgba(255,120,110,.18); --glow-pos:20% 115%; }
+* { box-sizing: border-box; }
+html { background: var(--sky-top); }
 html, body { height: 100%; }
-body { background: var(--bg); color: var(--ink); font: 17px/1.45 var(--body); }
-.app { max-width: 460px; height: 100%; margin: 0 auto; display: flex; flex-direction: column;
+body { margin: 0; color: var(--ink); font: 17px/1.5 var(--body);
+  background: radial-gradient(90% 60% at var(--glow-pos), var(--glow) 0%, transparent 70%),
+              linear-gradient(180deg, var(--sky-top) 0%, var(--sky-mid) 55%, var(--sky-low) 100%) fixed;
+  transition: background 1s; }
+#stars { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }
+.app { position: relative; z-index: 1; max-width: 580px; height: 100%; margin: 0 auto; display: flex; flex-direction: column;
   padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
-button { font: inherit; cursor: pointer; }
-button:focus-visible, input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
-.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--r); padding: 12px 14px; }
-.label { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: var(--soft); font-weight: 700; }
-.small { font-size: 13px; color: var(--soft); }
+button { font: 700 .95rem var(--ui); cursor: pointer; color: var(--ink); }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.card { background: linear-gradient(160deg, var(--glass-hi), var(--glass)); border: 1px solid var(--edge); border-radius: var(--r);
+  padding: 14px 16px; backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 18px 40px -24px rgba(0, 0, 0, .8), inset 0 1px 0 rgba(255, 255, 255, .06); }
+.label { font-family: var(--ui); font-size: .72rem; text-transform: uppercase; letter-spacing: .22em; color: var(--soft); font-weight: 700; }
+.small { font-size: .85rem; color: var(--soft); }
 
-.top { margin-top: 10px; border-radius: var(--r); padding: 8px 10px; color: var(--on-accent);
-  background: linear-gradient(135deg, var(--accent), var(--accent-2)); display: flex; gap: 12px; align-items: center; }
-.hello { flex: 1; min-width: 0; }
-.brand { font-size: 11px; text-transform: uppercase; letter-spacing: .14em; opacity: .85; font-weight: 700; }
-.top h1 { margin: 0; font: 800 19px/1.15 var(--display); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.ava { flex: none; width: 34px; height: 34px; border-radius: 50%; display: grid; place-items: center; background: var(--panel); }
-.mode { flex: none; border: 0; border-radius: 999px; background: rgba(255,255,255,.22); color: inherit; font-size: 13px; padding: 6px 10px; }
+/* Header: Luna's glass banner + real moon */
+.top { position: relative; margin-top: 14px; border: 1px solid var(--edge); border-radius: 22px; overflow: hidden;
+  background: linear-gradient(135deg, rgba(255,255,255,.07), rgba(255,255,255,.02));
+  backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+  padding: 14px 100px 14px 18px; min-height: 100px; display: flex; align-items: center; }
+.moon { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); width: 76px; height: 76px;
+  filter: drop-shadow(0 0 22px rgba(244, 236, 210, .22)); }
+.hello { min-width: 0; display: flex; flex-direction: column; gap: 4px; }
+.brand { font-family: var(--script); font-weight: 200; font-size: 1.4rem; letter-spacing: .5em; text-transform: uppercase; line-height: 1; color: var(--moon); }
+.top h1 { margin: 0; font: 500 1.02rem/1.25 var(--ui); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.meta { font-family: var(--ui); font-size: .8rem; color: var(--soft); display: flex; flex-wrap: wrap; gap: 2px 10px; }
+.meta .off { color: var(--accent); }
+.ava, .mode { display: none; }   /* Orbit's avatar + light/dark switch: Luna is one dark look */
 
-.scroll { flex: 1; min-height: 0; overflow-y: auto; padding-inline: 18px; margin-inline: -18px; }
-.done { margin-top: 10px; display: grid; gap: 8px; }
+.scroll { flex: 1; min-height: 0; overflow-y: auto; padding-inline: 18px; margin-inline: -18px; margin-top: 8px;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0, #000 18px); mask-image: linear-gradient(180deg, transparent 0, #000 18px); }
+.done { margin-top: 16px; display: grid; gap: 10px; border-color: rgba(127,224,168,.28); background: rgba(127,224,168,.06); }
 .donehead { display: flex; justify-content: space-between; align-items: center; width: 100%; background: none; border: 0; padding: 0; color: inherit; text-align: left; }
 .donelist { display: grid; gap: 8px; }
 .done.shut .donelist { display: none; }
-.item { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; }
+.item { display: grid; grid-template-columns: 24px 1fr auto; gap: 10px; align-items: center; font-size: .95rem; }
 .item.gone span:nth-child(2) { text-decoration: line-through; color: var(--soft); }
-.dot { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; font-size: 13px; color: #fff; background: var(--c); font-weight: 700; }
-.item .app { font-size: 13px; color: var(--c); font-weight: 700; }
+.dot { width: 24px; height: 24px; border-radius: 50%; display: grid; place-items: center; font-size: 12px; color: var(--on-c); background: var(--c); font-weight: 700; box-shadow: 0 0 12px color-mix(in srgb, var(--c) 55%, transparent); }
+.item .app { font-family: var(--ui); font-size: .8rem; color: var(--c); font-weight: 700; }
 .cal { --c: var(--cal); } .todo { --c: var(--todo); } .note { --c: var(--note); }
-.tag { display: inline-block; margin-left: 6px; font-size: 13px; font-weight: 700; color: #fff; background: var(--c); border-radius: 999px; padding: 1px 9px; vertical-align: 3px; }
+.tag { display: inline-block; margin-left: 6px; font: 700 .78rem var(--ui); color: var(--on-c); background: var(--c); border-radius: 999px; padding: 2px 10px; vertical-align: 3px; }
 .pick { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; padding-top: 8px; }
-.trow { display: grid; gap: 2px; padding: 4px 0; border-top: 1px solid var(--line); }
+.trow { display: grid; gap: 2px; padding: 8px 0; border-top: 1px solid var(--line); }
 .trow:first-of-type { border-top: 0; }
-.trow .t1 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 15px; }
-.trow .t1 b { color: var(--ink); margin-right: 2px; }
-.trow .sub { font-size: 13px; color: var(--soft); }
-.chip { font-size: 12px; font-weight: 700; border-radius: 999px; padding: 1px 8px; background: var(--bg); color: var(--soft); border: 1px solid var(--line); }
-.chip.over { background: #e5383b; color: #fff; border-color: transparent; }
-.chip.today { background: #f59e0b; color: #1c1206; border-color: transparent; }
-.chip.tom { background: var(--cal); color: #fff; border-color: transparent; }
-details.nrow { border-top: 1px solid var(--line); padding: 5px 0; font-size: 15px; }
+.trow .t1 { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; font-size: 1rem; }
+.trow .t1 b { font-family: var(--ui); color: var(--ink); margin-right: 2px; }
+.trow .sub { font-size: .85rem; color: var(--soft); }
+.chip { font: 700 .75rem var(--ui); border-radius: 999px; padding: 2px 9px; background: rgba(255,255,255,.05); color: var(--soft); border: 1px solid var(--edge); }
+.chip.over { background: var(--red); color: var(--on-c); border-color: transparent; }
+.chip.today { background: var(--amber); color: var(--on-c); border-color: transparent; }
+.chip.tom { background: var(--accent); color: var(--on-c); border-color: transparent; }
+details.nrow { border-top: 1px solid var(--line); padding: 8px 0; font-size: 1rem; }
 details.nrow:first-of-type { border-top: 0; }
 details.nrow summary { cursor: pointer; display: grid; grid-template-columns: 1fr auto; gap: 10px; list-style: none; }
 details.nrow summary::-webkit-details-marker { display: none; }
-details.nrow summary b { color: var(--ink); font-weight: 700; }
-details.nrow summary span { font-size: 13px; color: var(--soft); }
-details.nrow .full { font-size: 14px; color: var(--soft); padding-top: 4px; white-space: pre-wrap; }
-.mk { margin-top: 6px; font-size: 13px; border: 1px solid var(--todo); color: var(--todo); background: var(--panel); border-radius: 999px; padding: 2px 10px; font-weight: 700; }
-.pick button { font-size: 14px; border: 1px solid var(--c); color: var(--c); background: var(--panel); border-radius: 999px; padding: 3px 11px; font-weight: 700; }
+details.nrow summary b { font-family: var(--ui); color: var(--ink); font-weight: 700; }
+details.nrow summary span { font-size: .8rem; color: var(--soft); }
+details.nrow .full { font-size: .9rem; color: var(--soft); padding-top: 4px; white-space: pre-wrap; }
+.mk { margin-top: 8px; font-size: .8rem; border: 1px solid var(--todo); color: var(--todo); background: rgba(245,194,107,.08); border-radius: 999px; padding: 5px 12px; }
+.pick button { font-size: .85rem; border: 1px solid var(--c); color: var(--c); background: rgba(255,255,255,.04); border-radius: 999px; padding: 6px 13px; }
 
-.log { display: flex; flex-direction: column; gap: var(--gap); padding-block: var(--gap); }
-.them { display: grid; grid-template-columns: 26px 1fr; gap: 10px; align-items: start; max-width: 92%; }
-.mini { width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: var(--accent); color: var(--on-accent); }
-.say { font-size: 19px; line-height: 1.35; }
-.say.warn { color: var(--warn); font-size: 16px; }
-.me { align-self: flex-end; max-width: 80%; background: var(--accent-soft); padding: 9px 14px; border-radius: 18px 18px 4px 18px; border: 1px solid var(--line); }
-.more { display: flex; gap: 8px; padding-top: 6px; }
-.more button { font-size: 14px; border: 1px solid var(--line); background: var(--panel); color: var(--ink); border-radius: 999px; padding: 4px 12px; }
-.more button:disabled { opacity: .5; cursor: default; }
-.info { margin-top: 8px; display: grid; gap: 6px; padding: 10px 12px; }
-.info .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; font-size: 15px; font-variant-numeric: tabular-nums; }
-.info .row span:last-child { color: var(--soft); }
-.info .row b { color: var(--c, var(--ink)); }
-.think { display: flex; align-items: center; gap: 8px; min-height: 30px; font-size: 14px; color: var(--soft); }
-.them.ringing .mini { box-shadow: 0 0 0 3px var(--accent-soft), 0 0 0 3px var(--accent); }
+.log { display: flex; flex-direction: column; gap: var(--gap); padding-block: 18px; }
+.log > .label { display: flex; align-items: center; gap: 10px; align-self: stretch !important; }
+.log > .label::after { content: ""; flex: 1; height: 1px; background: linear-gradient(90deg, var(--edge), transparent); }
+.them { display: grid; grid-template-columns: 30px 1fr; gap: 10px; align-items: start; max-width: 94%; }
+.mini { width: 30px; height: 30px; border-radius: 50%; display: grid; place-items: center; color: var(--moon);
+  background: radial-gradient(circle at 35% 30%, rgba(169,155,255,.35), rgba(108,92,231,.18)); border: 1px solid var(--edge); }
+.say { font-size: 1.12rem; line-height: 1.4; }
+.say.warn { color: var(--warn); font-size: 1rem; }
+.me { align-self: flex-end; max-width: 80%; padding: 10px 15px; border-radius: 18px 18px 4px 18px;
+  background: linear-gradient(135deg, rgba(169,155,255,.22), rgba(108,92,231,.16)); border: 1px solid rgba(169,155,255,.28); }
+.more { display: flex; gap: 8px; padding-top: 8px; }
+.more button { font-size: .85rem; border: 1px solid var(--edge); background: rgba(255,255,255,.04); border-radius: 12px; padding: 8px 14px; }
+.more button:hover { background: rgba(255,255,255,.08); }
+.more button:disabled { opacity: .45; cursor: default; }
+.info { margin-top: 10px; display: grid; gap: 6px; padding: 14px 16px; }
+.info .label { display: flex; align-items: center; gap: 8px; }
+.info .label::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--c, var(--accent)); box-shadow: 0 0 10px var(--c, var(--accent)); }
+.info .row { display: grid; grid-template-columns: 1fr auto; gap: 12px; font-size: .97rem; font-variant-numeric: tabular-nums; padding: 2px 0; }
+.info .row span:last-child { font-family: var(--ui); font-size: .85rem; color: var(--accent); }
+.info .row b { font-family: var(--ui); color: var(--ink); }
+.think { display: flex; align-items: center; gap: 8px; min-height: 30px; font-family: var(--ui); font-size: .9rem; color: var(--accent); }
+.them.ringing .mini { box-shadow: 0 0 0 3px rgba(169,155,255,.15), 0 0 16px rgba(169,155,255,.5); }
 
-.box { margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center; }
-.box input { width: 100%; min-width: 0; font: inherit; font-size: 18px; color: var(--ink); background: none; border: 0; padding: 4px 2px; }
-.box input::placeholder { color: var(--soft); }
+/* Send box: Luna's floating bar */
+.box { margin: 4px 0 calc(14px + env(safe-area-inset-bottom, 0px)); display: grid; grid-template-columns: 1fr auto; gap: 10px; align-items: center;
+  background: rgba(8, 10, 28, .85); border-radius: 18px; padding: 8px 8px 8px 16px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+.box input { width: 100%; min-width: 0; font: inherit; font-size: 1.05rem; color: var(--ink); background: none; border: 0; padding: 6px 2px; }
+.box input::placeholder { color: #767b9e; }
 .box input:focus-visible { outline: none; }
-.box:focus-within { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
-.send { height: 40px; border-radius: 12px; border: 0; background: var(--accent); color: var(--on-accent); padding: 0 18px; font-weight: 700; }
-.send:disabled { opacity: .6; }
+.box:focus-within { border-color: rgba(169,155,255,.5); box-shadow: 0 0 0 3px rgba(169,155,255,.15); }
+.send { height: 44px; border-radius: 12px; border: 0; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; padding: 0 20px; }
+.send:disabled { opacity: .5; }
 .orb { width: 100%; height: 100%; overflow: visible; }
 @media (prefers-reduced-motion: no-preference) {
   .them.ringing .mini { animation: halo 2.2s ease-in-out infinite; }
-  @keyframes halo { 50% { box-shadow: 0 0 0 7px transparent, 0 0 0 3px var(--accent); } }
-  .new { animation: up .25s ease-out; } @keyframes up { from { transform: translateY(6px); opacity: .3; } }
+  @keyframes halo { 50% { box-shadow: 0 0 0 6px transparent, 0 0 22px rgba(169,155,255,.8); } }
+  .new { animation: up .3s ease-out; } @keyframes up { from { transform: translateY(8px); opacity: .3; } }
 }
+@media (max-width: 380px) { .top { padding-right: 88px; } .moon { width: 64px; height: 64px; right: 12px; } .brand { font-size: 1.2rem; letter-spacing: .42em; } }
 </style>
+
+<canvas id="stars" aria-hidden="true"></canvas>
 
 <div class="app">
   <div class="top">
     <div class="ava" aria-hidden="true" id="ava"></div>
-    <div class="hello"><div class="brand">Orbit Agent</div><h1 id="hi">Hello, Darren</h1></div>
+    <div class="hello">
+      <div class="brand">Luna</div>
+      <h1 id="hi">Hello, Darren</h1>
+      <div class="meta"><span class="off">Offline</span><span id="dateLabel"></span><span id="phaseName"></span></div>
+    </div>
+    <canvas class="moon" id="moon" aria-hidden="true"></canvas>
     <button class="mode" id="mode" type="button" aria-label="Light or dark">Auto</button>
   </div>
 
@@ -118,10 +157,161 @@ details.nrow .full { font-size: 14px; color: var(--soft); padding-top: 4px; whit
   </div>
 
   <form class="card box" id="box">
-    <input type="text" id="text" placeholder="Tell Orbit… e.g. dentist tue 3pm, note: …" aria-label="Message" autocomplete="off">
+    <input type="text" id="text" placeholder="Tell Luna… e.g. dentist tue 3pm, note: …" aria-label="Message" autocomplete="off">
     <button class="send" id="sendbtn" type="submit">Send</button>
   </form>
 </div>
+
+<script>
+// ---------- Luna's look (sky, stars, moon). Look only: none of Orbit's logic lives here. ----------
+let starLevel = 1;
+const STARS = { night: 1.0, morning: 0.75, afternoon: 0.25, evening: 0.6 };
+function skyFor(h) { return h < 5 ? 'night' : h < 12 ? 'morning' : h < 17 ? 'afternoon' : h < 21 ? 'evening' : 'night'; }
+function setSky(name) { document.documentElement.dataset.sky = name; starLevel = STARS[name]; }
+setSky(skyFor(new Date().getHours()));
+setInterval(() => setSky(skyFor(new Date().getHours())), 5 * 60 * 1000);
+document.getElementById('dateLabel').textContent = new Date().toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' });
+
+// Moving starfield: twinkle, slow drift, the odd shooting star
+(function () {
+  const c = document.getElementById('stars'), x = c.getContext('2d');
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  let W, H, d, stars = [], shoot = null, level = starLevel;
+  function build() {
+    d = window.devicePixelRatio || 1;
+    W = c.width = innerWidth * d; H = c.height = innerHeight * d;
+    const n = Math.round(innerWidth * innerHeight / 5000);
+    stars = Array.from({ length: n }, () => ({
+      x: Math.random() * W, y: Math.random() * H,
+      r: (0.25 + Math.random() ** 3 * 1.4) * d,
+      a: 0.2 + Math.random() * 0.7,
+      tw: 0.4 + Math.random() * 1.6, ph: Math.random() * 6.28,
+      z: 0.2 + Math.random() * 0.8,
+      tint: Math.random() > 0.88 ? '#cdd6ff' : Math.random() > 0.94 ? '#ffe2c4' : '#ffffff',
+    }));
+  }
+  function frame(t) {
+    level += (starLevel - level) * 0.04;
+    x.clearRect(0, 0, W, H);
+    const s = t / 1000;
+    for (const p of stars) {
+      if (!still) { p.x -= 0.07 * p.z * d; p.y += 0.022 * p.z * d; if (p.x < -2) p.x = W + 2; if (p.y > H + 2) p.y = -2; }
+      const tw = still ? 1 : 0.65 + 0.35 * Math.sin(s * p.tw + p.ph);
+      x.globalAlpha = p.a * tw * level;
+      x.fillStyle = p.tint;
+      x.beginPath(); x.arc(p.x, p.y, p.r, 0, 6.283); x.fill();
+    }
+    if (!still) {
+      if (!shoot && Math.random() < 0.0025 * level) {
+        shoot = { x: Math.random() * W * 0.8 + W * 0.2, y: Math.random() * H * 0.35, life: 0 };
+      }
+      if (shoot) {
+        shoot.life += 1;
+        const k = shoot.life / 60, len = 120 * d;
+        const hx = shoot.x - k * 420 * d, hy = shoot.y + k * 180 * d;
+        const g = x.createLinearGradient(hx, hy, hx + len, hy - len * 0.43);
+        g.addColorStop(0, 'rgba(255,255,255,.9)'); g.addColorStop(1, 'rgba(255,255,255,0)');
+        x.globalAlpha = Math.sin(Math.PI * k) * level;
+        x.strokeStyle = g; x.lineWidth = 1.4 * d;
+        x.beginPath(); x.moveTo(hx, hy); x.lineTo(hx + len, hy - len * 0.43); x.stroke();
+        if (shoot.life >= 60) shoot = null;
+      }
+      requestAnimationFrame(frame);
+    }
+  }
+  build(); addEventListener('resize', () => { build(); if (still) frame(0); });
+  requestAnimationFrame(frame);
+})();
+
+// Moon: realistic render with the real phase for the briefing date
+(function () {
+  const date = new Date();
+  const ref = Date.UTC(2000, 0, 6, 18, 14);        // known new moon
+  const f = ((((date - ref) / 86400000) % 29.530589) + 29.530589) % 29.530589 / 29.530589;  // 0 new, .5 full
+  const names = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous', 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
+  document.getElementById('phaseName').textContent = names[Math.round(f * 8) % 8];
+
+  const cv = document.getElementById('moon');
+  const S = Math.round(96 * Math.min(devicePixelRatio || 1, 3));
+  cv.width = cv.height = S;
+  const ctx = cv.getContext('2d'), img = ctx.createImageData(S, S), px = img.data;
+  // seeded value noise, wraps in x so the surface map has no seam
+  let seed = 42; const rnd = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  const G = 64, grid = Array.from({ length: G * G }, rnd);
+  const sm = t => t * t * (3 - 2 * t);
+  function noise(x, y, P) {
+    const xi = Math.floor(x), yi = Math.floor(y), xf = sm(x - xi), yf = sm(y - yi);
+    const g = (a, b) => grid[((b % G + G) % G) * G + ((a % P + P) % P)];
+    return (g(xi, yi) * (1 - xf) + g(xi + 1, yi) * xf) * (1 - yf) + (g(xi, yi + 1) * (1 - xf) + g(xi + 1, yi + 1) * xf) * yf;
+  }
+  const fbm = (x, y) => noise(x, y, 8) * .5 + noise(x * 2, y * 2, 16) * .25 + noise(x * 4, y * 4, 32) * .125 + noise(x * 8, y * 8, 64) * .0625;
+  const unit = (x, y) => [x, y, Math.sqrt(Math.max(0, 1 - x * x - y * y))];
+  // near-side maria (x right, y up on the sphere), far side mostly highlands
+  const maria = [[-.38,.38,.27],[.12,.36,.17],[.3,.08,.2],[.62,.25,.12],[.5,-.15,.15],[.38,-.32,.1],[-.2,-.36,.17],[-.6,.02,.3],[-.48,-.3,.16],[-.05,.62,.28]]
+    .map(([x, y, r]) => [...unit(x, y), r]);
+  const craters = Array.from({ length: 150 }, () => {
+    const zz = rnd() * 2 - 1, t = rnd() * 6.283, q = Math.sqrt(1 - zz * zz);
+    return [q * Math.sin(t), zz, q * Math.cos(t), .015 + rnd() ** 2 * .08];
+  });
+  const ty = unit(-.15, -.66); craters.push([...ty, .05]);   // Tycho
+  const e1 = [ty[2], 0, -ty[0]], n1 = Math.hypot(...e1); e1.forEach((v, k) => e1[k] = v / n1);
+  const e2 = [ty[1] * e1[2] - ty[2] * e1[1], ty[2] * e1[0] - ty[0] * e1[2], ty[0] * e1[1] - ty[1] * e1[0]];
+  // bake a surface map once (longitude x latitude), then spin it each frame
+  const TW = 512, TH = 256, tex = new Float32Array(TW * TH);
+  for (let v = 0; v < TH; v++) for (let u = 0; u < TW; u++) {
+    const lon = (u / TW - .5) * 6.2832, lat = (.5 - (v + .5) / TH) * Math.PI;
+    const X = Math.cos(lat) * Math.sin(lon), Y = Math.sin(lat), Z = Math.cos(lat) * Math.cos(lon);
+    const fx = u / TW * 8, fy = v / TH * 4;
+    let a = .78 + (fbm(fx + .3, fy + 3) - .5) * .25, m = 0;
+    for (const [mx, my, mz, mr] of maria) {
+      const d = Math.hypot(X - mx, Y - my, Z - mz) / (mr * (.8 + .5 * fbm(fx * 2 + mx * 9, fy * 2)));
+      m = Math.max(m, 1 - sm(Math.min(1, Math.max(0, (d - .6) / .5))));
+    }
+    a -= m * .36;
+    for (const [cx, cy, cz, cr] of craters) {
+      const d = Math.hypot(X - cx, Y - cy, Z - cz) / cr;
+      if (d < 1.1) a += d < .85 ? -.045 * (1 - m * .5) * (1 - d * .6) : .045 * (1 - Math.abs(d - .95) * 6);
+    }
+    const dx = X - ty[0], dy = Y - ty[1], dz = Z - ty[2], td = Math.hypot(dx, dy, dz);
+    if (td > .05 && td < .9) {
+      const ang = Math.atan2(dx * e2[0] + dy * e2[1] + dz * e2[2], dx * e1[0] + dy * e1[1] + dz * e1[2]);
+      a += Math.max(0, Math.sin(ang * 9 + 1) ** 24) * .12 * (1 - td);
+    }
+    tex[v * TW + u] = a;
+  }
+  // light comes from the real phase, so the shadow stays true while the surface turns
+  const fl = Math.min(.87, Math.max(.13, f));   // always keep a thin crescent visible
+  const th = 2 * Math.PI * fl, Lx = Math.sin(th), Lz = -Math.cos(th);
+  function draw(rot) {
+    for (let j = 0; j < S; j++) for (let i = 0; i < S; i++) {
+      const x = (i + .5) / S * 2 - 1, y = (j + .5) / S * 2 - 1, r2 = x * x + y * y;
+      const o = (j * S + i) * 4;
+      if (r2 > 1) { px[o + 3] = 0; continue; }
+      const z = Math.sqrt(1 - r2);
+      let lu = (Math.atan2(x, z) + rot) / 6.2832 + .5; lu -= Math.floor(lu);
+      const lv = .5 - Math.asin(-y) / Math.PI;
+      const a = tex[Math.min(TH - 1, lv * TH | 0) * TW + (lu * TW | 0) % TW];
+      const ndl = x * Lx + z * Lz;
+      const day = sm(Math.min(1, Math.max(0, (ndl + .04) / .14)));
+      const lit = a * day * (.45 + .55 * Math.max(0, ndl)) * (.8 + .2 * z) * 1.3;
+      const glow = (1 - day) * (.06 + a * .07 + .08 * (1 - z) ** 3);   // soft earthshine + rim on the dark side
+      px[o]     = Math.min(255, lit * 255 + glow * 190);
+      px[o + 1] = Math.min(255, lit * 247 + glow * 205);
+      px[o + 2] = Math.min(255, lit * 228 + glow * 235);
+      px[o + 3] = 255 * Math.min(1, (1 - Math.sqrt(r2)) * S * .5);
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+  draw(0);
+  if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const t0 = performance.now(); let last = 0;
+    (function spin(t) {
+      if (t - last > 60) { last = t; draw((t - t0) / 1000 * 6.2832 / 90); }   // one turn every 90s
+      requestAnimationFrame(spin);
+    })(t0);
+  }
+})();
+</script>
 
 <script>
 (function () {
@@ -134,9 +324,8 @@ details.nrow .full { font-size: 14px; color: var(--soft); padding-top: 4px; whit
   const $ = id => document.getElementById(id), root = document.documentElement;
   const log = $('log'), scroller = $('scroll');
   const esc = s => String(s).replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
-  const ORB = l => `<svg class="orb" viewBox="0 0 40 40" aria-hidden="true"><g transform="rotate(-24 20 20)"><ellipse cx="20" cy="20" rx="17" ry="7" fill="none" stroke="currentColor" stroke-width="1.2" opacity=".35"/>${
-    [['--wmm',19,0],['--cal',27,-9],['--todo',23,-15],['--fridge',31,-4]].map(([c,d,b]) => `<circle r="2.6" fill="var(${c})"><animateMotion dur="${d}s" begin="${b}s" repeatCount="indefinite" path="M3,20 a17,7 0 1,0 34,0 a17,7 0 1,0 -34,0"/></circle>`).join('')
-    }</g><text x="20" y="20" text-anchor="middle" dominant-baseline="central" style="font:800 16px var(--display);fill:${l === 'D' ? 'var(--accent-2)' : 'currentColor'}">${l}</text></svg>`;
+  // icon only (look): Orbit's orbit-ring icon swapped for Luna's crescent moon with one star circling it
+  const ORB = l => `<svg class="orb" viewBox="0 0 40 40" aria-hidden="true"><path d="M24 9a12 12 0 1 0 8 20.5A10 10 0 0 1 24 9z" fill="var(--moon)" opacity=".95"/><circle r="1.6" fill="var(--accent)"><animateMotion dur="9s" repeatCount="indefinite" path="M4,20 a16,16 0 1,0 32,0 a16,16 0 1,0 -32,0"/></circle></svg>`;
   $('ava').innerHTML = ORB('D');
   const h = new Date().getHours();
   $('hi').textContent = `${h < 12 ? 'Morning' : h < 18 ? 'Afternoon' : 'Evening'}, Darren`;

@@ -112,7 +112,11 @@
     try { r = await fetch(CAL_API + path, { method, headers: Object.assign({ Authorization: 'Bearer ' + t }, body ? { 'Content-Type': 'application/json' } : {}), body: body ? JSON.stringify(body) : undefined }); }
     catch (e) { throw { code: 'server_unavailable' }; }
     if (r.status === 401) { put(CALK, null); need(CAL, 'reconnect'); throw { code: 'tool_error', message: 'needs a quick tap to reconnect. Tap ⚙ or the banner' }; }
-    if (!r.ok) { const e = await r.json().catch(() => ({})); throw { code: 'tool_error', message: (e.error && e.error.message) || 'error ' + r.status }; }
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({})), msg = (e.error && e.error.message) || '';
+      if (r.status === 403 && /has not been used|is disabled|accessNotConfigured/i.test(msg + JSON.stringify(e))) throw { code: 'tool_error', message: 'is switched off in Google Cloud. Turn on the Google Calendar API, wait 2 minutes, then try again' };
+      throw { code: 'tool_error', message: msg || 'error ' + r.status };
+    }
     return r.status === 204 ? {} : r.json();
   }
   const tz = () => Intl.DateTimeFormat().resolvedOptions().timeZone || 'Europe/London';

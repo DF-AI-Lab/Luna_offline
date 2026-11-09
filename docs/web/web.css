@@ -46,3 +46,17 @@ body.lw-locked .app { visibility: hidden; }
 .lw-ver { text-align: center; color: var(--soft); font: 500 .75rem var(--ui); margin: 14px 0 0; }
 
 .lw-vtag { display: inline-block; margin-left: 6px; vertical-align: 3px; font: 700 .68rem/1.4 var(--ui); letter-spacing: .02em; text-transform: none; color: var(--soft); border: 1px solid var(--edge); border-radius: 99px; padding: 1px 8px; font-variant-numeric: tabular-nums; }
+
+/* update sheet (mock B) */
+.lw-updback { z-index: 70; }
+.lw-upd { display: grid; gap: 14px; padding-top: 12px; }
+.lw-grab { width: 40px; height: 4px; border-radius: 9px; background: rgba(255,255,255,.2); justify-self: center; }
+.lw-updtop { display: flex; gap: 14px; align-items: center; }
+.lw-updtop img { border-radius: 14px; flex: none; box-shadow: 0 10px 24px -12px #000; }
+.lw-updtop h2 { margin: 0; font: 700 1.1rem var(--ui); }
+.lw-updtop p { margin: 2px 0 0; color: var(--soft); font: 500 .85rem var(--ui); }
+.lw-upd ul { margin: 0; padding-left: 20px; color: var(--soft); font-size: .92rem; display: grid; gap: 4px; }
+.lw-updbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lw-updbtns button { font: 700 .95rem var(--ui); border-radius: 14px; padding: 13px; border: 1px solid var(--edge); background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; }
+.lw-updbtns .lw-go { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+.lw-updbtns button:disabled { opacity: .6; }

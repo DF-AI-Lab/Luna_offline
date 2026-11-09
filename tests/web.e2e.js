@@ -91,6 +91,17 @@ const TN = 'https://tasknotes.df-ai-lab-hq.workers.dev', WMM = 'https://wmm-lite
   await send('gate code 4321'); await page.waitForTimeout(800);
   await page.screenshot({ path: OUT + '/5-claude.png' });
 
+  // 5) update sheet: the server says there's a newer version
+  await page.route('**/version.json*', r => json(r, { version: '9.99', notes: ['Test note one', 'Test note two'] }));
+  await page.evaluate(() => LunaSettings.checkUpdate()); await page.waitForTimeout(500);
+  assert.equal(await page.isVisible('#lw-upd'), true, 'update sheet shows');
+  assert.match(await page.locator('#lw-upd').innerText(), /Luna v9\.99 is here[\s\S]*You're on v1\.\d+[\s\S]*Test note one/);
+  await page.screenshot({ path: OUT + '/6-update.png' });
+  await page.click('#lw-later'); assert.equal(await page.isHidden('#lw-upd'), true, 'Later hides it');
+  await page.evaluate(() => LunaSettings.checkUpdate()); await page.waitForTimeout(400);
+  assert.equal(await page.isHidden('#lw-upd'), true, 'Later = not again this visit');
+  assert.match(await page.locator('#lw-ver').innerText(), /^v\d+\.\d+$/);
+
   const names = calls.filter(c => c[0] === 'mcp').map(c => c[2]);
   console.log(JSON.stringify(calls.filter(c => c[0] !== 'mcp' || !['day_summary'].includes(c[2])), null, 0));
   for (const n of ['day_summary', 'add_task', 'add_spend', 'remove_added', 'money_summary', 'add_note']) assert.ok(names.includes(n), 'called ' + n);

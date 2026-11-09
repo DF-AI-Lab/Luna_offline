@@ -1,7 +1,9 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '1.01';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  const VERSION = '1.02';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  // "What's new" lines for THIS version: shown in the update sheet on phones still on an older version. Short, plain.
+  const NOTES = ['Update pop-up (this one) when a new version is out', 'New home-screen icon: LUNA with a crescent', 'Version number at the top'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');
@@ -124,10 +126,48 @@
   }
   function closeSheet() { const s = $('lw-sheet'); if (s) s.hidden = true; }
 
+  // ---------- update sheet (mock B, Darren 9 Nov) ----------
+  const newer = (a, b) => { const x = String(a).split('.').map(Number), y = String(b).split('.').map(Number);
+    for (let i = 0; i < Math.max(x.length, y.length); i++) { if ((x[i] || 0) !== (y[i] || 0)) return (x[i] || 0) > (y[i] || 0); } return false; };
+  let checking = false;
+  async function checkUpdate() {
+    if (checking || ($('lw-upd') && !$('lw-upd').hidden)) return;
+    checking = true;
+    try {
+      const r = await fetch('version.json?t=' + Date.now(), { cache: 'no-store' });
+      const v = r.ok ? await r.json() : null;
+      let later = ''; try { later = sessionStorage.getItem('luna_upd_later') || ''; } catch (e) {}
+      if (v && v.version && newer(v.version, VERSION) && later !== v.version) showUpdate(v);
+    } catch (e) { /* offline: try again later */ } finally { checking = false; }
+  }
+  function showUpdate(v) {
+    let s = $('lw-upd');
+    if (!s) { s = document.createElement('div'); s.id = 'lw-upd'; s.className = 'lw-back lw-updback'; document.body.append(s); }
+    const notes = (Array.isArray(v.notes) ? v.notes : []).slice(0, 4);
+    s.innerHTML = `<div class="lw-sheet lw-upd" role="dialog" aria-modal="true" aria-labelledby="lw-updh">
+      <div class="lw-grab" aria-hidden="true"></div>
+      <div class="lw-updtop"><img src="icons/icon-192.png" alt="" width="52" height="52"><div><h2 id="lw-updh">Luna v${esc(v.version)} is here</h2><p>You're on v${esc(VERSION)}</p></div></div>
+      ${notes.length ? `<ul>${notes.map(n => `<li>${esc(n)}</li>`).join('')}</ul>` : ''}
+      <div class="lw-updbtns"><button type="button" id="lw-later">Later</button><button type="button" id="lw-now" class="lw-go">Update now</button></div></div>`;
+    s.hidden = false;
+    const later = () => { try { sessionStorage.setItem('luna_upd_later', v.version); } catch (e) {} s.hidden = true; };
+    $('lw-later').onclick = later;
+    s.onclick = e => { if (e.target === s) later(); };
+    $('lw-now').onclick = async () => {
+      const b = $('lw-now'); b.disabled = true; b.textContent = 'Updating…';
+      try { const reg = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
+      location.reload();
+    };
+    $('lw-now').focus();
+  }
+
   // ---------- start ----------
   gear();
   LunaMCP.finish().then(r => { if (r) toast(r.msg); }).catch(e => toast(String(e.message || e)));
   startPassport();
   if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
-  window.LunaSettings = { open: openSheet, close: closeSheet, toast, VERSION };
+  setTimeout(checkUpdate, 2500);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) checkUpdate(); });
+  setInterval(checkUpdate, 30 * 60 * 1000);
+  window.LunaSettings = { open: openSheet, close: closeSheet, toast, VERSION, checkUpdate };
 })();

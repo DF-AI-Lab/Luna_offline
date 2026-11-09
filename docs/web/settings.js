@@ -1,9 +1,9 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '1.02';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  const VERSION = '1.03';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
   // "What's new" lines for THIS version: shown in the update sheet on phones still on an older version. Short, plain.
-  const NOTES = ['Update pop-up (this one) when a new version is out', 'New home-screen icon: LUNA with a crescent', 'Version number at the top'];
+  const NOTES = ['New Luna Assist logo at the top and on the home screen', 'Blue theme to match the logo'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');

@@ -12,7 +12,7 @@ body.lw-locked .app { visibility: hidden; }
   max-width: min(92vw, 520px); display: flex; gap: 12px; align-items: center; padding: 10px 12px 10px 16px; border-radius: 14px;
   background: rgba(14, 16, 40, .95); border: 1px solid var(--edge); color: var(--ink); font: 600 .9rem var(--ui); box-shadow: 0 16px 40px -16px #000; }
 .lw-toast[hidden] { display: none; }
-.lw-toast button { border: 0; border-radius: 10px; padding: 7px 12px; background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; font: 700 .85rem var(--ui); cursor: pointer; }
+.lw-toast button { border: 0; border-radius: 10px; padding: 7px 12px; background: linear-gradient(135deg, var(--accent-3), var(--accent-2)); color: #fff; font: 700 .85rem var(--ui); cursor: pointer; }
 
 .lw-back { position: fixed; inset: 0; z-index: 40; background: rgba(1, 2, 8, .6); backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px); display: flex; align-items: flex-end; justify-content: center; }
 .lw-back[hidden] { display: none; }
@@ -35,7 +35,7 @@ body.lw-locked .app { visibility: hidden; }
 .lw-hint { margin: 0; color: var(--soft); font-size: .8rem; line-height: 1.4; }
 .lw-seg { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 .lw-seg button { border: 1px solid var(--edge); background: rgba(255,255,255,.04); color: var(--ink); border-radius: 12px; padding: 9px 6px; font: 700 .78rem/1.25 var(--ui); cursor: pointer; }
-.lw-seg button[aria-checked="true"] { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border-color: transparent; }
+.lw-seg button[aria-checked="true"] { background: linear-gradient(135deg, var(--accent-3), var(--accent-2)); color: #fff; border-color: transparent; }
 .lw-lab { font: 700 .8rem var(--ui); color: var(--soft); margin-top: 2px; }
 .lw-line { display: flex; gap: 8px; }
 .lw-line input, .lw-sec select { flex: 1; min-width: 0; font: 500 .95rem var(--ui); color: var(--ink); background: rgba(3,4,14,.5); border: 1px solid var(--edge); border-radius: 12px; padding: 9px 12px; }
@@ -58,5 +58,5 @@ body.lw-locked .app { visibility: hidden; }
 .lw-upd ul { margin: 0; padding-left: 20px; color: var(--soft); font-size: .92rem; display: grid; gap: 4px; }
 .lw-updbtns { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
 .lw-updbtns button { font: 700 .95rem var(--ui); border-radius: 14px; padding: 13px; border: 1px solid var(--edge); background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; }
-.lw-updbtns .lw-go { background: linear-gradient(135deg, var(--accent), var(--accent-2)); border-color: transparent; color: #fff; }
+.lw-updbtns .lw-go { background: linear-gradient(135deg, var(--accent-3), var(--accent-2)); border-color: transparent; color: #fff; }
 .lw-updbtns button:disabled { opacity: .6; }

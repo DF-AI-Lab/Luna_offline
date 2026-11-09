@@ -98,6 +98,9 @@
     if ((m = t.match(/£\s?(\d{1,6}(?:[.,]\d{1,2})?)/))) return { amount: +m[1].replace(',', '.'), hit: m[0] };
     if ((m = t.match(/\b(\d{1,6}(?:\.\d{1,2})?)\s?(?:quid|pounds?|gbp)\b/))) return { amount: +m[1], hit: m[0] };
     if ((m = t.match(/\b(\d{1,3})p\b/))) return { amount: +m[1] / 100, hit: m[0] };
+    // a plain number with money words ("add 20 to spends for sky", "spent 12.50 at tesco")
+    if (/\b(spends?|spent|spending|bought|paid|cost|costs|bill|money|wmm)\b/.test(t) &&
+        (m = t.match(/(?:^|\s)(\d{1,6}(?:\.\d{1,2})?)(?=\s|$)(?!\s*(?:am|pm|th|st|nd|rd|days?|mins?|minutes|hours?|%))/))) return { amount: +m[1], hit: m[1] };
     return null;
   }
 
@@ -121,7 +124,7 @@
   function clean(text, hits) {
     let s = ' ' + text + ' ';
     for (const h of hits.filter(Boolean).sort((x, y) => y.length - x.length)) s = s.split(h).join(' ');
-    s = s.replace(/\b(please|pls|can you|could you|add|put|pop|stick|remind me to|remind me|i need to|need to|i have to|have to|i've got to|got to|gotta|don't forget to|dont forget to|make a note|note down|jot down|i spent|spent|spend|paid for|paid|bought|cost me|costs|cost|for|at|on|in|to|my|the|a|an|today|tonight)\b/gi, m => /^(a|an|the|for|at|on|in|to|my)$/i.test(m) ? ` ${m} ` : ' ');
+    s = s.replace(/\b(please|pls|can you|could you|add|put|pop|stick|remind me to|remind me|i need to|need to|i have to|have to|i've got to|got to|gotta|don't forget to|dont forget to|make a note|note down|jot down|i spent|spent|spends|spending|spend|paid for|paid|bought|cost me|costs|cost|for|at|on|in|to|my|the|a|an|today|tonight)\b/gi, m => /^(a|an|the|for|at|on|in|to|my)$/i.test(m) ? ` ${m} ` : ' ');
     s = s.replace(/\b(to|in|on|into)\s+(my\s+)?(diary|calendar|notes?|to-?do( list)?|list|wmm|money)\b/gi, ' ');
     s = s.replace(/^\s*(note|task|todo|to-?do|diary|calendar|money)\s*[:\-]\s*/i, ' ');
     s = s.replace(/[!?.,;:]+\s*$/, '').replace(/\s+/g, ' ').trim();
@@ -151,7 +154,7 @@
     if (/^\s*note\b|\b(in|to|into) (my )?notes?\b|\bnote:|\bmake a note\b|\bjot (it )?down\b/.test(t)) said = 'note';
     else if (/\b(in|to|into|on) (my )?(diary|calendar)\b|^\s*(diary|calendar)\b/.test(t)) said = 'calendar';
     else if (/\b(on|to) (my )?(to-?do( list)?|list)\b|^\s*(task|todo|to-?do)\b/.test(t)) said = 'task';
-    else if (money && /\b(wmm|where's my money|money|spent|spend|bought|paid|bill|direct debit|standing order|on the card|credit card)\b/.test(t)) said = 'money';
+    else if (money && /\b(wmm|where's my money|money|spent|spends?|spending|bought|paid|bill|direct debit|standing order|on the card|credit card)\b/.test(t)) said = 'money';
 
     // 2) a question?
     const isQ = !said && (/\?\s*$/.test(msg) || QSTART.test(t.trim()) || /\b(am i free|what's on|whats on|what is on|how much|how's my|hows my)\b/.test(t));

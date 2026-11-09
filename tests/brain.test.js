@@ -4,6 +4,8 @@ const R = require('../docs/web/brain.js');
 const NOW = new Date(2026, 10, 8, 20, 30); // Sun 8 Nov 2026 20:30
 const g = (m, lessons) => R.guess(m, NOW, lessons || []);
 const cases = [
+  ['Add 20 to spends for sky', { kind: 'money', amount: 20, money_type: 'spend' }],
+  ['spent 12.50 at tesco', { kind: 'money', amount: 12.5 }],
   ['dentist tue 3pm', { kind: 'calendar', title: 'Dentist', date: '2026-11-10', time: '15:00' }],
   ['tennis tonight at 6', { kind: 'calendar', title: 'Tennis', date: '2026-11-08', time: '18:00' }],
   ['buy bin bags', { kind: 'task', title: 'Buy bin bags', date: '' }],

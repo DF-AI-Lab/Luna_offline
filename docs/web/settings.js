@@ -1,9 +1,9 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '1.04';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  const VERSION = '1.05';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
   // "What's new" lines for THIS version: shown in the update sheet on phones still on an older version. Short, plain.
-  const NOTES = ['Money fix: add 20 to spends now goes to Money (no £ needed)', 'Luna Assist logo and blue theme'];
+  const NOTES = ['Update now actually updates (no more loop)', 'Money fix: add 20 to spends now goes to Money (no £ needed)', 'Luna Assist logo and blue theme'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');
@@ -155,7 +155,16 @@
     s.onclick = e => { if (e.target === s) later(); };
     $('lw-now').onclick = async () => {
       const b = $('lw-now'); b.disabled = true; b.textContent = 'Updating…';
-      try { const reg = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration(); if (reg) await reg.update(); } catch (e) {}
+      // fetch every file fresh (not the phone's short-term copy), let the new worker take over, then reload
+      try {
+        const reg = 'serviceWorker' in navigator && await navigator.serviceWorker.getRegistration();
+        if (reg) {
+          await reg.update();
+          const w = reg.installing || reg.waiting;
+          if (w) await new Promise(ok => { const t = setTimeout(ok, 8000); w.addEventListener('statechange', () => { if (w.state === 'activated' || w.state === 'redundant') { clearTimeout(t); ok(); } }); });
+        }
+        await Promise.all(['./', 'index.html', 'web/settings.js', 'web/brain.js', 'web/web.css'].map(f => fetch(f, { cache: 'reload' }).catch(() => {})));
+      } catch (e) {}
       location.reload();
     };
     $('lw-now').focus();

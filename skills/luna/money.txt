@@ -1,0 +1,433 @@
+# Money: Where's My Money (spends, bills, card, paid off card).
+spent 12.50 at tesco
+spent £8 at greggs
+£12.50 tesco
+tesco 5.10 crisps
+greggs 3.40
+mcdonalds 7.99
+£25 amazon on the card
+amazon 25 on the card
+put 40 on the credit card for clothes
+£60 b&q on the card
+paid £100 off the card
+card payment 200
+add 20 to spends for sky
+add 15 to wmm for petrol
+petrol £50
+fuel 45
+diesel 60 quid
+£40 gas next friday
+gas 40 coming out friday
+council tax 120 coming out on the 1st
+rent 650 going out monday
+netflix £11 a month on the 3rd
+netflix 11 a month
+spotify 10.99 a month on the 15th
+new bill gym 25 monthly on the 1st
+phone bill 15 a month
+direct debit for water 30 on the 20th
+standing order 50 to savings on the 28th
+subscription disney 7.99 monthly
+bought a coat for 45
+bought shoes £30
+bought lunch 6.50
+paid 20 for the window cleaner
+paid the plumber 80
+paid £15 for parking
+spent 30 on food shopping
+spent a fiver in the shop
+lunch 8 quid
+takeaway £22
+chippy 14.50
+pub 18
+cinema tickets 24
+haircut £15
+barbers 12 pounds
+asda 43.20
+aldi 56.78
+lidl £38
+sainsburys 21.30
+morrisons 17.80
+co op 4.50
+boots 9.99
+primark £20
+argos 35
+ebay 12 on the card
+paypal 18.50
+train ticket 23.40
+bus 2.50
+taxi home £12
+uber 9.80
+vet bill £90
+dentist 25 paid
+prescription 9.90
+kids pocket money 10
+birthday present for mum 25
+wmm 15 tesco
+where's my money 20 petrol
+spnet 12 at tesco
+spet 5 in greggs
+tesco 5.1 crisp
+petrol 50 quid
+£5.10 vegtables
+veg 16.45
+milk and bread 3.20
+crisps 1.50
+tesco express 6.75
+tesco petrol 40
+asda 61
+asda 18.20 on the card
+aldi 27.43 food shop
+lidl 19.05
+morrisons 52.60 big shop
+sainsburys 12 on card
+iceland 15.50
+co op 3.10 milk
+spar 2.20
+m&s 14 tea
+b&q 23.98
+wickes 41.50 for paint
+toolstation 12.40
+wilko 7.50
+poundland 4
+the range 13.99
+ikea 85 on the credit card
+currys 199 on the card
+argos 24.99 toy
+smyths 30 lego
+sports direct 45 trainers
+next 28 jeans
+h&m 17.99
+tk maxx 22
+matalan 35 kids clothes
+primark 12.50
+boots 6.49
+superdrug 8.20
+specsavers 89 glasses
+amazon 14.99
+amazon 32.49 on the card
+ebay 8.50
+vinted 6
+etsy 11.20 card
+just eat 24.80
+deliveroo 19.60
+uber eats 16.45
+dominos 21.99
+kfc 9.48
+burger king 7.29
+subway 5.49
+greggs 2.65 sausage roll
+starbucks 4.75
+cafe 11.20 breakfast
+coffee 3.20
+sandwich 3.75
+chippy tea 16
+indian 42 on the card
+pizza 14.99
+kebab 8.50
+ice cream 5 for the kids
+sweets 2.40
+pub lunch 26.50
+round at the pub 19.20
+beers 12
+wine 8.50
+fags 14.20
+vape 5.99
+lottery 4
+scratch card 2
+bet 5 on the football
+newspaper 1.80
+stamps 6.80
+card and stamps 4.25
+flowers 12 for mum
+present for sarah 30
+gift for dad 22.50
+kids birthday present 15.99
+school trip 12
+school dinners 23 this week
+school photos 18
+school uniform 44.50
+kids club 8
+swimming 5.40
+tennis court 6
+gym 4.50 day pass
+football subs 3
+cinema 21.60
+bowling 32
+soft play 9
+zoo tickets 48 on the card
+train to leeds 17.80
+train tickets 46.20 on card
+bus fare 2
+bus ticket 4.50 day rider
+taxi 8.40
+uber 11.25
+car park 4.80
+car wash 6
+petrol 45.02
+petrol 30 at asda
+diesel 55
+fuel 62.18 on the card
+put 20 petrol in
+tyres 140 on the credit card
+mot 54.85
+car service 180 on the card
+oil 9.99
+screenwash 4
+barber 13
+kids haircuts 20
+nails 25
+prescription 9.90 at boots
+chiro 35
+physio 40
+vet 62.50
+vets 45 for the jab
+dog groomer 30
+cat litter 7.50
+window cleaner 10
+paid the gardener 25
+paid the chiro 35
+paid dave back 20
+paid sarah 15 for the tickets
+paid 60 for the mot
+paid 4.50 parking
+paid 12 for the taxi
+paid 9.99 for the app
+gave the kids 10 each
+gave jack 5 pocket money
+gave mum 40 for the shopping
+lent paul 20
+sent sarah 30
+spent 4.60 at costa
+spent 17 at the pub
+spent 55 in asda
+spent 3 on parking
+spent 22.40 on a takeaway
+spent 8.99 on amazon
+spent 6 on lunch
+spent 40 on the kids
+spent 120 on xmas presents
+spent 35 in town
+spent about 20 at the market
+spent 15 quid at the chippy
+spent a tenner at the car boot
+spent a fiver on sweets
+tenner for the taxi
+fiver for parking
+a tenner in the pub
+50 quid food shop
+15 quid on a takeaway
+3 quid on the bus
+7 quid lunch
+30 pounds on shoes
+5 pounds car park
+50p for the trolley
+80p sweets
+12 on lunch
+25 on petrol
+9.50 at the cafe
+6.20 in greggs
+45 at the garage
+18.50 takeaway
+3.99 app
+21 kids shoes
+bought a kettle 24.99
+bought a drill 59 on the card
+bought milk 1.45
+bought bread and milk 2.90
+bought the kids trainers 38
+bought a new mop 8
+bought paint for 26
+bought stamps 6.80
+got petrol 40
+got a coffee 3.40
+got lunch 5.50
+got a takeaway 23
+got the kids shoes 42
+got dog food 19
+cost 14 for the taxi
+the taxi cost 9
+parking cost 3.50
+haircut cost 15
+mot cost 54
+it was 12.50 for the tickets
+tickets were 35
+lunch was 8.40
+shopping was 47.20
+food shop 63.40
+weekly shop 71.18
+big shop 94 at asda
+top up shop 11.30
+shopping 28.60
+groceries 33
+toiletries 12.40
+nappies 9
+kids clothes 27
+clothes 48 on the card
+shoes 35 on card
+coat 60 on the credit card
+new phone case 9.99
+phone top up 10
+electric top up 20
+gas top up 15
+topped up the gas 20
+topped up the electric 30
+on the card 45 for the tyres
+on the credit card 120 flights
+put 60 on the card for tyres
+stuck 80 on the credit card
+card 30 argos
+credit card 75 hotel
+paid 200 off the card
+paid 50 off my card
+paid off 75 on the credit card
+paid the card 100
+pay 150 off the card
+card paid off 250
+cleared 400 off the credit card
+rent 525 on the 1st
+rent 600 a month
+council tax 135 a month on the 1st
+gas 55 a month
+gas and electric 110 monthly on the 14th
+electric 72 a month on the 20th
+water 34 monthly
+water 31 a month on the 9th
+broadband 27 a month
+virgin 38 monthly on the 22nd
+phone 12 a month on the 6th
+mobile 18 monthly
+phone contract 23 a month on the 17th
+car insurance 41.20 a month on the 2nd
+home insurance 11 a month
+life insurance 9.50 monthly
+car tax 16.62 a month
+breakdown cover 8 a month
+netflix 12.99 monthly on the 10th
+spotify 11.99 a month
+disney plus 4.99 a month
+gym 29.99 monthly on the 1st
+kids club 20 a month
+dog insurance 14 a month on the 25th
+new bill water 34 on the 9th
+new direct debit bt 38 on the 22nd
+direct debit gas 55 on the 14th
+dd phone 12 on the 6th
+standing order 25 to mum on the 1st
+bill phone 18 on the 6th
+add bill broadband 27 on the 12th
+gas 60 coming out monday
+electric 80 due friday
+rent 525 coming out on the 1st
+car insurance 41 coming out tomorrow
+phone 12 going out thursday
+netflix 12.99 comes out on the 10th
+council tax 135 due on the 1st
+water bill 34 due next week
+virgin 38 to come out friday
+dentist 60 to pay next friday
+mot 55 next tuesday
+tyres 140 to pay friday
+school trip 12 due monday
+add 12 to spends for lunch
+add 30 to spends petrol
+add 8.50 to wmm
+add spend 15 chippy
+add 45 for the food shop
+add a spend of 6 for parking
+log 20 for petrol
+log 4.50 coffee
+put 12 down for lunch
+put 9.99 for netflix in wmm
+stick 20 in spends for the kids
+wmm 8 lunch
+wmm petrol 40
+spend 14 pub
+spends 22 takeaway
+spnt 20 on petrol
+spent 15 at tescos
+tecso 12.40
+asad 30
+petorl 40
+payed 20 for the window cleaner
+bougt shoes 30
+nteflix 12.99 a month
+whsmith 4.99
+the works 6
+card shop 2.99
+jd 55 on the card
+decathlon 24.99
+pets at home 31.20
+dunelm 18
+garden centre 22.50
+butchers 14.60
+bakery 3.80
+market 12
+corner shop 5.35
+off licence 9
+chemist 4.20
+post office 3.35
+pizza hut 26
+pizza express 48 on the card
+toby carvery 39.80
+harvester 44.10
+chip shop 9.80
+sausage roll 1.40
+bacon sandwich 3.50
+2 teas 4.40
+3 pints 14.10
+sweets for the kids 3
+kids comics 7.98
+raffle tickets 5
+tombola 2
+donation 10
+sponsor money 5 for jack
+tip for the barber 2
+gave the paper lad 5
+gave dave 10 for petrol
+gave mum 20
+paid mum back 50
+paid dave back 30 for the tickets
+paid the chiro 35 on card
+paid 25 for the physio
+paid 80 for the plumber
+paid 100 off the mastercard
+35 for the kids trainers
+18 for a haircut
+40 for the vets
+12 for the cinema
+6.50 for lunch
+2.50 for a coffee
+60 on tyres
+45 on the food shop
+30 on the electric
+15 on a takeaway
+8 on sweets
+gas card 20
+electric key 30
+council tax 135
+tv licence 14.54
+water 34
+phone bill 23
+gas bill 55
+vodafone 18 a month on the 4th
+ee 25 monthly on the 11th
+three 10 a month
+bt 32 a month on the 16th
+talktalk 26 a month
+british gas 80 a month on the 3rd
+octopus 95 monthly
+eon 70 a month dd on the 12th
+admiral 38 a month on the 7th
+council tax 135 dd on the 1st
+water 34 dd on the 9th
+xbox 10.99 a month
+apple 2.99 a month on the 21st
+youtube premium 12.99 monthly
+train 22.60 to york
+train to london 68 on the card
+bus to town 4.50
+taxi to the station 7.80
+flights 180 on the credit card
+hotel 95 on the card
+petrol 20 on the card

@@ -12,7 +12,7 @@
     const { msg, now, lessons } = LunaRules.readPrompt(prompt);
     const free = LunaRules.guess(msg, now, lessons);
     const m = mode();
-    const useClaude = m !== 'offline' && LunaClaude.canSpend() && (m === 'claude' || free.confidence < 0.7);
+    const useClaude = m !== 'offline' && LunaClaude.canSpend() && (m === 'claude' || free.confidence < 0.8);
     if (useClaude) {
       try { const r = await LunaClaude.json(prompt); last.by = 'claude'; last.why = ''; return r; }
       catch (e) { last.by = 'free'; last.why = e.message || e.code; return free; }

@@ -1,9 +1,9 @@
 // Luna Offline: works with no signal. The app's own files are kept on the phone; apps/Google/Claude always go to the network.
-const VERSION = '47657d229e';
+const VERSION = '426ea04846';
 const CACHE = 'luna-offline-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
   'passport/config.js', 'passport/google.js', 'passport/passport.js', 'passport/ui.js', 'passport/passport.css', 'passport/theme.json',
-  'web/brain.js', 'web/claude.js', 'web/store.js', 'web/connect.js', 'web/shim.js', 'web/settings.js', 'web/web.css',
+  'brain/core.js', 'brain/weights.js', 'web/brain.js', 'web/claude.js', 'web/store.js', 'web/connect.js', 'web/shim.js', 'web/settings.js', 'web/web.css',
   'vendor/anthropic-sdk-1.3.0.js'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(FILES.map(f => new Request(f, { cache: 'reload' })))).then(() => self.skipWaiting())); });
 self.addEventListener('activate', e => {

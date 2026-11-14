@@ -60,3 +60,5 @@ body.lw-locked .app { visibility: hidden; }
 .lw-updbtns button { font: 700 .95rem var(--ui); border-radius: 14px; padding: 13px; border: 1px solid var(--edge); background: rgba(255,255,255,.05); color: var(--ink); cursor: pointer; }
 .lw-updbtns .lw-go { background: linear-gradient(135deg, var(--accent-3), var(--accent-2)); border-color: transparent; color: #fff; }
 .lw-updbtns button:disabled { opacity: .6; }
+/* the phone app has the Brain report in ⚙, so the header 🧠 (for claude.ai) stays hidden: keeps the gear on one line */
+#brainbtn { display: none; }

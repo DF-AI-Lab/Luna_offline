@@ -17,6 +17,8 @@
 <script src="passport/google.js"></script>
 <script src="passport/passport.js"></script>
 <script src="passport/ui.js"></script>
+<script src="brain/core.js"></script>
+<script src="brain/weights.js"></script>
 <script src="web/brain.js"></script>
 <script src="web/claude.js"></script>
 <script src="web/store.js"></script>
@@ -82,6 +84,7 @@ button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); ou
 .top h1 { margin: 0; font: 500 1.02rem/1.25 var(--ui); color: var(--ink); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .meta { font-family: var(--ui); font-size: .8rem; color: var(--soft); display: flex; flex-wrap: wrap; gap: 2px 10px; }
 .meta .off { color: var(--accent); }
+.brainbtn { font: inherit; background: none; border: 0; padding: 0 2px; cursor: pointer; opacity: .75; }
 .ava, .mode { display: none; }   /* Orbit's avatar + light/dark switch: Luna is one dark look */
 
 .scroll { flex: 1; min-height: 0; overflow-y: auto; padding-inline: 18px; margin-inline: -18px; margin-top: 8px;
@@ -165,7 +168,7 @@ details.nrow .full { font-size: .9rem; color: var(--soft); padding-top: 4px; whi
     <div class="hello">
       <div class="brand">Luna<span class="sub">Assist</span></div>
       <h1 id="hi">Hello, Darren</h1>
-      <div class="meta"><span class="off">Offline</span><span id="dateLabel"></span><span id="phaseName"></span></div>
+      <div class="meta"><span class="off">Offline</span><span id="dateLabel"></span><span id="phaseName"></span><button type="button" class="brainbtn" id="brainbtn" aria-label="Brain report">🧠</button></div>
     </div>
     <svg class="moon" id="moon" viewBox="0 0 100 100" aria-hidden="true">
       <path d="M17 63 A36 13 -22 0 1 83 37" fill="none" stroke="#8fd0ff" stroke-width="4.5" stroke-linecap="round" opacity=".55"/>
@@ -363,6 +366,49 @@ document.getElementById('dateLabel').textContent = new Date().toLocaleDateString
     window.claude?.use('db').then(x => { db = x; }),
   ].filter(Boolean));
 
+  // ---------- the Mini Brain, also on claude.ai: it guesses silently next to Claude, both go in the log ----------
+  // (On the phone app the brain files are already loaded; on claude.ai they come with the artifact.)
+  const brainReady = window.LunaRules ? Promise.resolve() : ['brain/core.js', 'brain/weights.js', 'web/brain.js'].reduce((p, src) =>
+    p.then(() => new Promise(r => { const e = document.createElement('script'); e.src = src; e.onload = e.onerror = () => r(); document.head.append(e); })), Promise.resolve());
+  let lastLessons = [];
+  // who answered (free brain / Claude) + what the brain thought and how sure. Goes in every log line.
+  function brainSaid(t, a) {
+    const by = window.LunaWeb ? (LunaWeb.last.by || 'free') : 'claude';
+    let b = null;
+    try { if (window.LunaRules && LunaRules.getBrain && LunaRules.getBrain()) b = LunaRules.guess(t, new Date(), lastLessons); } catch (e) {}
+    return { by, brain: b ? b.kind : '', sure: b ? b.confidence : null, why: b ? String(b.why || '').slice(0, 140) : '', claude: by === 'claude' ? String(a.kind || '') : '' };
+  }
+
+  // ---------- Brain report: how the brain is doing on Darren's real messages ----------
+  // The truth for each line: what he moved it to, or what he kept. Undone / "None" lines = not sure, so left out.
+  const truthOf = r => r.right ? String(r.right).split(' + ')[0].trim() : (r.status === 'kept' || r.status === 'also' || r.status === 'moved') ? r.picked : '';
+  async function brainReport(o) {
+    if (!db) { o.say("I can't reach the log from here.", '', true); return; }
+    let rows = [];
+    try { rows = (await db.collection('log').orderBy('at', 'desc').limit(500).get()).docs.map(d => d.data()).filter(r => r && r.msg && r.msg[0] !== '('); }
+    catch (e) { o.say("I couldn't read the log.", '', true); return; }
+    const K = { calendar: 'Diary', task: 'To-do', note: 'Note', money: 'Money', question: 'Question', other: 'Fridge' };
+    const pc = (a, b) => b ? Math.round(100 * a / b) + '%' : '-';
+    const scored = rows.filter(r => r.brain && truthOf(r));
+    const right = scored.filter(r => r.brain === truthOf(r));
+    const sure = scored.filter(r => r.sure >= 0.8), sureRight = sure.filter(r => r.brain === truthOf(r));
+    const wrong = scored.filter(r => r.brain !== truthOf(r));
+    const row = (k, v) => `<div class="row"><b>${esc(k)}</b><span>${esc(v)}</span></div>`;
+    const line = r => `<div class="row"><b>"${esc(String(r.msg).slice(0, 60))}"</b><span>${esc(K[r.brain] || r.brain)} ${r.sure != null ? Math.round(r.sure * 100) + '%' : ''} → ${esc(K[truthOf(r)] || truthOf(r))}</span></div>`;
+    const days = rows.length ? Math.max(1, Math.round((Date.parse(rows[0].at) - Date.parse(rows[rows.length - 1].at)) / 864e5)) : 0;
+    let card = `<div class="card info"><div class="label">Brain report · last ${rows.length} messages${days ? ` · ${days} day${days === 1 ? '' : 's'}` : ''}</div>
+      ${row('Brain right', `${right.length} of ${scored.length} = ${pc(right.length, scored.length)}`)}
+      ${row('When sure (80%+), right', `${sureRight.length} of ${sure.length} = ${pc(sureRight.length, sure.length)}`)}
+      ${row('Asked you (Did you mean)', String(rows.filter(r => r.asked).length))}
+      ${row('Claude answered', String(rows.filter(r => r.by === 'claude').length))}
+      ${row('Undone', String(rows.filter(r => r.status === 'undo').length))}
+      ${row('Moved (Wrong app)', String(rows.filter(r => r.status === 'moved').length))}</div>`;
+    if (wrong.length) card += `<div class="card info"><div class="label">Brain got wrong (brain said → really)</div>${wrong.slice(0, 12).map(line).join('')}</div>`;
+    const unsure = scored.filter(r => r.sure != null && r.sure < 0.8 && r.brain === truthOf(r));
+    if (unsure.length) card += `<div class="card info"><div class="label">Right, but not sure</div>${unsure.slice(0, 6).map(line).join('')}</div>`;
+    o.say(scored.length ? `The brain got ${pc(right.length, scored.length)} right on your real messages.` : 'Nothing to score yet. Use me for a few days, then ask again.', card);
+  }
+
   // ---------- learning log: Darren's fixes, read before every guess ----------
   async function lessons() {
     if (!db) return [];
@@ -484,7 +530,8 @@ document.getElementById('dateLabel').textContent = new Date().toLocaleDateString
   // ---------- understand a message (Claude, quick) ----------
   async function understand(t) {
     const now = new Date();
-    const past = (await lessons()).filter(r => r.msg && r.right).slice(0, 20)
+    lastLessons = (await lessons()).filter(r => r.msg && r.right);
+    const past = lastLessons.slice(0, 20)
       .map(r => `- "${String(r.msg).slice(0, 160)}" → ${r.right}${r.picked ? ` (NOT ${r.picked})` : ''}`).join('\n');
     const prompt = `You are Orbit, Darren's assistant. Turn his short message into ONE action.
 Now: ${DAYS[now.getDay()]} ${ymd(now)} ${pad(now.getHours())}:${pad(now.getMinutes())} (UK time).
@@ -617,30 +664,57 @@ Message: ${t}`;
     }
   }
 
+  // "Did you mean…?": one button per likely kind (best first) + None. Resolves with the kind, or null.
+  const KIND_NAME = { calendar: 'Diary', task: 'To-do', note: 'Note', money: 'Money', question: 'A question', other: 'Fridge' };
+  const KIND_CLS = { calendar: 'cal', task: 'todo', note: 'note', money: 'money', question: '', other: '' };
+  function didYouMean(o, options) {
+    return new Promise(res => {
+      const el = o.say('Not sure. Did you mean…', `<div class="pick" data-ask>${options.map(k => `<button type="button" class="${KIND_CLS[k] || ''}" data-k="${k}">${esc(KIND_NAME[k] || k)}</button>`).join('')}<button type="button" data-k="">None</button></div>`);
+      el.querySelectorAll('[data-ask] button').forEach(b => b.onclick = () => {
+        el.querySelectorAll('[data-ask] button').forEach(x => { x.disabled = true; x.style.opacity = x === b ? 1 : .4; });
+        res(b.dataset.k || null);
+      });
+    });
+  }
+
   let busy = false;
+  const openReport = () => { if (busy) return; $('text').value = 'brain report'; $('box').requestSubmit(); };
+  $('brainbtn').onclick = openReport; window.LunaReport = openReport;
   $('box').onsubmit = async e => {
     e.preventDefault();
     const t = $('text').value.trim(); if (!t || busy) return;
     busy = true; $('sendbtn').disabled = true; $('text').value = '';
     fold(true); bubble(t);
     await ready;
-    const o = orbitSays();
+    let o = orbitSays();
     try {
+      if (/^(brain )?report[.!?]*$/i.test(t)) return brainReport(o);
       if (!sample || !mcp) { o.say("I can't reach Claude or your apps from here. Open me in claude.ai.", '', true); return; }
       let a;
       try { a = await understand(t); } catch (err) { o.say(trouble(err, 'Claude'), '', true); return; }
       if (!a || typeof a !== 'object') { o.say("I couldn't work that one out. Try saying it differently.", '', true); return; }
+      await brainReady;
+      const meta = brainSaid(t, a);
+      // the free brain isn't sure (under 80%)? Ask with buttons. His tap is saved as a lesson = it learns.
+      if (typeof a.confidence === 'number' && a.confidence < 0.8 && Array.isArray(a.options) && a.options.length > 1) {
+        const pick = await didYouMean(o, a.options);
+        meta.asked = true;
+        if (!pick) { logIt({ msg: t, picked: a.kind, status: 'none', ...meta }); o.say('OK, I left it. Try saying it another way.'); return; }
+        learn({ msg: t, picked: a.kind, right: pick, how: 'asked' });
+        if (pick !== a.kind) a = window.LunaRules ? LunaRules.guess(t, new Date(), [], pick) : { ...a, kind: pick };
+        o = orbitSays();
+      }
       a.title = String(a.title || t).slice(0, 120); a.text = String(a.text || '').slice(0, 2000);
       a.date = /^\d{4}-\d\d-\d\d$/.test(a.date) ? a.date : '';
       a.time = /^\d\d:\d\d$/.test(a.time) ? a.time : ''; a.end = /^\d\d:\d\d$/.test(a.end) ? a.end : '';
       a.amount = Math.round((Number(String(a.amount ?? '').replace(/[£,]/g, '')) || 0) * 100) / 100; a.money_type = String(a.money_type || ''); a.day = String(a.day ?? '');
       const cats = ['Home', 'Work', 'AI Lab', 'Health'];
-      if (a.kind === 'question') { logIt({ msg: t, picked: 'question', status: 'kept' }); return show(a.about, o, { category: cats.includes(a.category) ? a.category : '', search: String(a.search || '').slice(0, 40) }); }
-      if (!APPS[a.kind]) { logIt({ msg: t, picked: 'other', status: 'kept' }); o.say("That's one for Fridge. It's not hooked up yet, so for now I can do your diary, to-do list, notes and money."); return; }
+      if (a.kind === 'question') { logIt({ msg: t, picked: 'question', status: 'kept', ...meta }); return show(a.about, o, { category: cats.includes(a.category) ? a.category : '', search: String(a.search || '').slice(0, 40) }); }
+      if (!APPS[a.kind]) { logIt({ msg: t, picked: 'other', status: 'kept', ...meta }); o.say("That's one for Fridge. It's not hooked up yet, so for now I can do your diary, to-do list, notes and money."); return; }
       let d;
       try { d = await add(a.kind, a, o); } catch (err) { o.say(trouble(err, APPS[a.kind].where), '', true); return; }
       done.unshift({ kind: d.kind, id: d.id, label: d.label }); saveDone(); renderDone();
-      d.logRef = logIt({ msg: t, picked: d.kind, status: 'kept' });
+      d.logRef = logIt({ msg: t, picked: d.kind, status: 'kept', ...meta });
       receipt(o, d, t, a);
     } finally { busy = false; $('sendbtn').disabled = false; }
   };

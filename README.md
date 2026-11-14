@@ -22,7 +22,7 @@
   - `web/store.js` = memory (phone + Drive), `web/shim.js` = stands in for claude.ai
   - `web/settings.js` + `web/web.css` = ⚙ screen, lock wiring
 - Servers: TaskNotes + WMM Workers accept sign-ins from df-ai-lab.github.io (pushed 8 Nov)
-- Tests: `node --test tests/brain.test.js` and `node tests/web.e2e.js`
+- Tests: `npm test`
 
 ## What changed vs Orbit
 - CSS, header, fonts, colours → Luna's
@@ -44,6 +44,7 @@
 - 🔌 Apps: Diary = Google Calendar API. TaskNotes + WMM = their own servers, same login Claude uses
 - 💾 Memory: this phone + Drive (App data / DF…… / Luna / luna-offline-data.json)
 
-## Next (from Luna's plan)
-- Swap Claude for a free tiny offline model, API only as a capped backup
-- Learn from Luna's `log/` replies
+## 🧠 Mini Brain (v1.06)
+- The free brain is now a trained word-weights brain, shared by all apps: see **BRAIN.md**
+- Under 80% sure → "Did you mean…?" buttons (or Claude, if on). Your tap is learned at once.
+- Retrain: `node tools/train.js [luna-offline-data.json]`

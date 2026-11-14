@@ -86,6 +86,25 @@ const TN = 'https://tasknotes.df-ai-lab-hq.workers.dev', WMM = 'https://wmm-lite
   await page.locator('.log .them').last().locator('text=Undo').click(); await page.waitForTimeout(500);
   await send("how's my money");
   await page.screenshot({ path: OUT + '/4-chat.png' });
+  // 3b) not sure → "Did you mean…?" buttons; the tap is learned, so next time it's sure
+  await page.evaluate(() => localStorage.setItem('luna_brain_mode', 'offline'));
+  await send('jacket size large');
+  assert.match(await page.locator('.log .them').last().innerText(), /Did you mean/);
+  await page.screenshot({ path: OUT + '/4b-did-you-mean.png' });
+  await page.locator('.log [data-ask] button[data-k="note"]').last().click(); await page.waitForTimeout(700);
+  assert.match(await page.locator('.log .them').last().innerText(), /In your notes: jacket size large/);
+  const nNotes = calls.filter(c => c[2] === 'add_note').length;
+  await send('jacket size large');
+  assert.doesNotMatch(await page.locator('.log .them').last().innerText(), /Did you mean/, 'learned from the tap');
+  assert.equal(calls.filter(c => c[2] === 'add_note').length, nNotes + 1, 'second time goes straight to notes');
+  await page.screenshot({ path: OUT + '/4c-learned.png' });
+  // 3c) Brain report: every log line says what the brain thought; the 🧠 button scores it
+  const lastRow = await page.evaluate(() => { const l = (JSON.parse(localStorage.getItem('luna_db_v1')) || {}).log || {}; return Object.values(l).sort((x, y) => x.at < y.at ? 1 : -1)[0]; });
+  assert.equal(lastRow.brain, 'note'); assert.equal(lastRow.by, 'free'); assert.ok(lastRow.sure >= 0.8, JSON.stringify(lastRow));
+  await page.click('#lw-gear'); await page.click('#lw-report'); await page.waitForTimeout(700);
+  const rep = await page.locator('.log .them').last().innerText();
+  assert.match(rep, /Brain report[\s\S]*Brain right[\s\S]*Asked you/i, rep);
+  await page.screenshot({ path: OUT + '/4d-report.png' });
   // 4) Always Claude, with a key + cap
   await page.evaluate(() => { localStorage.setItem('luna_brain_mode', 'claude'); localStorage.setItem('luna_claude_key', 'sk-ant-test'); });
   await send('gate code 4321'); await page.waitForTimeout(800);

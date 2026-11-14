@@ -1,0 +1,13 @@
+{
+  "app": "luna",
+  "about": "Luna Offline: diary, to-do, notes, money, questions. One line per action; examples in <action>.txt.",
+  "actions": {
+    "calendar": "an appointment or event on a day / at a time → Google Calendar",
+    "task": "something to do, buy, ring, fix, book → TaskNotes to-do",
+    "note": "something to remember, an idea, info → TaskNotes notes",
+    "money": "spent, bought, a bill, card spend, paid the card → Where's My Money",
+    "question": "asks what's on, what's due, notes, money → Luna answers",
+    "other": "fridge food, use-by dates → Fridge (not hooked up yet)"
+  },
+  "ask_below": 0.8
+}

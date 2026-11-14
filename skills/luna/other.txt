@@ -1,0 +1,249 @@
+# Other: fridge food, use-by dates (Fridge isn't hooked up yet).
+milk use by friday
+chicken in the fridge use by 12th
+chicken use by tomorrow
+mince goes off sunday
+eggs go off on the 20th
+yogurts out of date tuesday
+ham use by 3/12
+leftover curry in the fridge
+leftover pasta in the freezer
+put the bread in the freezer
+fish in the freezer
+pizza in the freezer
+cheese opened today
+opened the milk today
+salad use by monday
+sausages in the fridge till thursday
+bacon use by 14th nov
+soup in the freezer from sunday
+fridge has butter and cheese
+freezer has peas and chips
+tesco crisps in the cupboard
+veg in the fridge use by friday
+vegetables in the fridge
+vegtables use by wed
+strawberries go off tomorrow
+cream use by sat
+leftovers from the roast
+cooked rice in the fridge
+defrosted chicken today
+beef joint in the freezer
+fridge chicken
+whats in the fridge
+mlik use by fri
+chiken use by sunday
+lefovers in the fridge
+milk use by 14th
+milk goes off sat
+opened the cream today
+opened a tin of beans in the fridge
+half a tin of tomatoes in the fridge
+bread use by sunday
+bread in the freezer
+loaf goes off tuesday
+eggs use by 3rd dec
+butter use by 20th nov
+cheese goes off next week
+cheddar opened today
+yogurts use by fri
+yoghurt goes off monday
+cream goes off tomorrow
+ham goes off thursday
+ham in the fridge opened sunday
+chicken use by 15th
+chicken breasts in the freezer
+chicken thighs use by wed
+chicken goes off tomorrow
+mince use by tomorrow
+mince in the freezer
+beef mince goes off friday
+steak use by sat
+burgers in the freezer
+sausages use by 12th nov
+sausages in the freezer
+bacon opened today
+bacon goes off monday
+pork chops use by thurs
+gammon in the fridge
+lamb in the freezer
+fish fingers in the freezer
+salmon in the fridge use by tomorrow
+cod in the freezer
+prawns use by friday
+pizza use by 18th
+chips in the freezer
+peas in the freezer
+ice cream in the freezer
+ice lollies in the freezer
+garlic bread in the freezer
+frozen veg in the freezer
+veg goes off soon
+carrots in the fridge
+peppers go off this week
+mushrooms use by tomorrow
+salad goes off tuesday
+lettuce use by sat
+tomatoes in the fridge
+cucumber going soft
+spinach use by 9th
+potatoes going green
+bananas going brown
+strawberries use by wed
+grapes in the fridge
+berries go off tomorrow
+apples in the fridge
+orange juice opened today
+juice use by 22nd
+oat milk opened monday
+soup in the fridge use by thurs
+hummus opened today
+coleslaw use by friday
+pasta sauce opened sunday
+jar of pesto opened today
+gravy leftover in the fridge
+leftover roast in the fridge
+leftover chicken curry
+leftover pizza in the fridge
+leftover bolognese in the freezer
+leftover stew from sunday
+leftovers in the fridge from last night
+leftover rice in the fridge
+leftover takeaway in the fridge
+left over lasagne in fridge
+last nights tea in the fridge
+portion of chilli in the freezer
+2 portions of curry in the freezer
+tub of bolognese in the freezer
+3 chicken breasts in the freezer
+4 burgers in the freezer
+half a pizza in the fridge
+half a loaf in the freezer
+bit of cheese left
+some ham left in the fridge
+cooked pasta in the fridge
+cooked mince in the fridge
+cooked sausages from yesterday
+made soup today in the fridge
+made a chilli 2 portions in the freezer
+batch of curry in the freezer
+froze the mince
+froze the bread
+froze half the loaf
+froze the leftover curry
+frozen the sausages
+put the chicken in the freezer
+put the leftovers in the fridge
+put the pizza in the freezer
+put the ham in the fridge
+stuck the bread in the freezer
+took the mince out of the freezer
+took the chicken out to defrost
+chicken out of the freezer
+defrosting the mince
+defrosted the sausages today
+chicken defrosting in the fridge
+fridge has milk eggs and ham
+fridge has leftover curry
+fridge is nearly empty
+freezer has mince and fish fingers
+freezer is full
+in the fridge milk cheese ham
+in the freezer chicken and peas
+fridge milk
+fridge eggs use by 4th
+fridge yogurts
+freezer chips
+freezer pizza
+cupboard has beans and pasta
+beans in the cupboard
+tins of soup in the cupboard
+pasta in the cupboard
+rice in the cupboard
+cereal nearly gone
+out of milk
+no bread left
+bread best before 12th
+crisps best before jan
+cheese best before 3rd
+biscuits best before march
+tins best before next year
+ham bbe 14th
+milk bbe tomorrow
+yogurt out of date
+ham out of date yesterday
+cream out of date today
+eggs out of date on the 5th
+bread gone mouldy
+milk gone off
+chicken expires tomorrow
+mince expires 12th
+salad expires wed
+yogurts expire sat
+sausages need using by friday
+chicken needs using today
+mince needs eating by tomorrow
+veg needs using up
+use the chicken by wed
+use up the mince tomorrow
+eat the yogurts by sunday
+ham needs eating
+cheese needs using
+chicken use by tmrw
+sausages use by 2moro
+mlik goes off thurs
+chese in the fridge
+sasages in the freezer
+leftovr curry in the fridge
+chiken in the freezer
+yougurt use by sat
+6 sausages left
+4 eggs left in the fridge
+2 yogurts left
+3 pints of milk in the fridge
+1 loaf in the freezer
+8 fish fingers left
+half a pack of bacon left
+a few slices of ham left
+one portion of stew left
+only 2 slices of bread left
+froze 3 portions of bolognese
+froze 4 chicken thighs
+froze 2 pizzas today
+frozen 6 burgers
+bagged up 3 portions of chilli for the freezer
+milk nearly gone
+butter nearly out
+ketchup running low
+teabags running out
+cheese is mouldy
+bread is stale
+ham is off
+chicken smells off
+yogurt is out of date
+lettuce gone slimy
+bananas are off
+cream cheese opened sunday
+tin of tuna opened today
+jar of sauce opened monday use in 3 days
+mayo opened last week
+pesto use within 5 days
+cooked rice use by tomorrow
+cooked turkey in the fridge from sunday
+roast beef leftover in the fridge
+pie in the fridge use by thurs
+quiche in the fridge
+scotch eggs use by 9th
+pork pie best before sat
+trifle use by sunday
+pate best before 20th
+wraps best before wed
+bagels in the freezer
+waffles in the freezer
+yorkshire puddings in the freezer
+frozen peas nearly gone
+defrosting chicken for tomorrow
+defrosting the fish for tea
+mince defrosting for tea
+got the burgers out of the freezer
+took 2 chicken breasts out

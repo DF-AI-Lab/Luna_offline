@@ -40,3 +40,44 @@ test('reads Orbit prompt', () => {
   const r = R.readPrompt(p);
   assert.equal(r.msg, 'buy milk'); assert.equal(r.lessons[0].right, 'note'); assert.equal(r.now.getHours(), 20);
 });
+test('unsure → offers options to ask', () => {
+  const got = g('jacket size large');
+  assert.ok(got.confidence < 0.8); assert.ok(got.options.length >= 2); assert.ok(got.options.includes('note'));
+});
+test('Did you mean pick forces the kind, keeps details', () => {
+  const got = R.guess('gas 40 friday', NOW, [], 'money');
+  assert.equal(got.kind, 'money'); assert.equal(got.amount, 40); assert.equal(got.money_type, 'upcoming');
+});
+test('typos still work', () => {
+  assert.equal(g('dentsit tues 3pm').kind, 'calendar');
+  assert.equal(g('spnet 12 at tesco').kind, 'money');
+});
+test('money with no £ still gets the amount', () => {
+  const a = g('tesco 23.50'); assert.equal(a.kind, 'money'); assert.equal(a.amount, 23.5); assert.equal(a.title, 'Tesco');
+  const b = g('greggs 4.20 lunch'); assert.equal(b.amount, 4.2);
+});
+
+// ---- v1.07: Stage 2 fixes ----
+const more = [
+  ['chiro thurs 5.30', { kind: 'calendar', title: 'Chiro', date: '2026-11-12', time: '17:30' }],          // time with no am/pm
+  ['gas man coming fri 8-1', { kind: 'calendar', title: 'Gas man coming', time: '08:00', end: '13:00' }],
+  ['hairut sat 10', { kind: 'calendar', date: '2026-11-14', time: '10:00' }],
+  ['dentist tomoz 9.15', { title: 'Dentist', date: '2026-11-09' }],                                        // his own words reach the date finder
+  ['day after tomorrow dentist 2pm', { kind: 'calendar', title: 'Dentist', date: '2026-11-10', time: '14:00' }],
+  ['put bins out', { kind: 'task', title: 'Put bins out' }],                                               // "put" stays unless he said where
+  ['add to my to do buy bin bags', { kind: 'task', title: 'Buy bin bags' }],
+  ['spent a fiver in the shop', { kind: 'money', amount: 5, title: 'Shop' }],
+  ['tenner on the lottery', { kind: 'money', amount: 10 }],
+  ['2 coffees 7.10', { kind: 'money', amount: 7.1 }],                                                      // the one with pence is the price
+  ['new bill gym 25 monthly on the 1st', { kind: 'money', money_type: 'bill', amount: 25, day: '1', title: 'Gym' }],
+  ['vet bill 90', { kind: 'money', money_type: 'spend', amount: 90 }],                                     // "bill" alone is not a monthly bill
+  ['whats in my diary', { kind: 'question', about: 'diary' }],                                             // asking, not adding
+  ['whats in my notes', { kind: 'question', about: 'notes' }],
+  ['whats on my list', { kind: 'question', about: 'tasks' }],
+  ['tesco 5.30', { kind: 'money', amount: 5.3, time: '' }],                                                // a price is not a time
+];
+for (const [m, want] of more) test(m, () => {
+  const got = g(m);
+  for (const [k, v] of Object.entries(want)) assert.deepStrictEqual(got[k], v, `${m} → ${k}: ${JSON.stringify(got)}`);
+});
+test('odd words do not crash it', () => assert.ok(g('constructor tostring __proto__ valueOf').kind));

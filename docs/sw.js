@@ -1,5 +1,5 @@
 // Luna Offline: works with no signal. The app's own files are kept on the phone; apps/Google/Claude always go to the network.
-const VERSION = '41366220e3';
+const VERSION = '426ea04846';
 const CACHE = 'luna-offline-' + VERSION;
 const FILES = ['./', 'index.html', 'manifest.webmanifest', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/maskable-512.png',
   'passport/config.js', 'passport/google.js', 'passport/passport.js', 'passport/ui.js', 'passport/passport.css', 'passport/theme.json',

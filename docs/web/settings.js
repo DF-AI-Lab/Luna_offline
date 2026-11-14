@@ -1,9 +1,9 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '1.07';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  const VERSION = '1.08';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
   // "What's new" lines for THIS version: shown in the update sheet on phones still on an older version. Short, plain.
-  const NOTES = ['Smarter Mini Brain: 4x more examples, right far more often', 'Diary times without am/pm now work (chiro thurs 5.30)', 'Asking whats in my diary no longer adds to the diary'];
+  const NOTES = ['Brain report: tap the brain at the top to see how it is doing', 'Every message now records what the brain thought and how sure', 'Smarter Mini Brain from v1.07'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');
@@ -86,6 +86,7 @@
       </section>
       <section class="lw-sec"><h3>Memory</h3>
         <div class="lw-row"><div class="lw-grow"><b>${LunaDB.count('log')} messages · ${LunaDB.count('learning')} lessons</b><small>Drive copy: ${esc(saved)}${LunaDB.status.err ? ' · ' + esc(LunaDB.status.err) : ''}</small></div><button type="button" id="lw-export">Download</button></div>
+        <div class="lw-line"><button type="button" id="lw-report">🧠 Brain report</button></div>
         <p class="lw-hint">Saved on this phone and in Drive: App data / ${esc(LunaWeb.passport ? LunaWeb.passport.id : 'DF……')} / Luna. This is Orbit's training data.</p>
       </section>
       <section class="lw-sec"><h3>Passport</h3>
@@ -98,6 +99,7 @@
     if ($('lw-keydel')) $('lw-keydel').onclick = () => { LunaClaude.setKey(null); render(); };
     $('lw-model').onchange = e => LunaClaude.setModel(e.target.value);
     $('lw-capsave').onclick = () => { LunaClaude.setCap($('lw-cap').value); toast('Cap saved'); render(); };
+    $('lw-report').onclick = () => { $('lw-x').click(); window.LunaReport && window.LunaReport(); };
     $('lw-export').onclick = () => {
       const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([LunaDB.exportAll()], { type: 'application/json' }));
       a.download = `luna-offline-training-${new Date().toISOString().slice(0, 10)}.json`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 2000);

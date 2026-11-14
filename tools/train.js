@@ -45,15 +45,36 @@ for (const f of process.argv.slice(2)) {
 const seen = new Set(); const realU = real.filter(r => !seen.has(r.text.toLowerCase()) && seen.add(r.text.toLowerCase()));
 realU.forEach((r, i) => (i % 5 === 4 ? exam : train).push(r));
 
+// 2b) keep the exam honest: an example that reads the same as an exam line (after tidy + swap) is left out of
+//     training, and said out loud. Also flag the same line filed under two different actions.
+const shape = t => MB.read(t, null, typos).tokens.join(' ');
+const examShapes = new Set(exam.map(e => shape(e.text)));
+const copies = [], clash = [], first = new Map();
+for (let i = train.length - 1; i >= 0; i--) if (examShapes.has(shape(train[i].text))) { copies.push(train[i].text); train.splice(i, 1); }
+for (const e of train) { const k = e.text.toLowerCase(), was = first.get(k); if (was && was !== e.label) clash.push(`"${e.text}" is in ${was} AND ${e.label}`); first.set(k, e.label); }
+
 // 3) a little made-up mess: copies of some examples with one slip (dropped or swapped letter), so it gets used to typos
 let seed = 3; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
 function slip(t) {
-  const ws = t.split(' '), i = ws.findIndex((w, n) => w.length >= 5 && rnd() < 0.5 + n * 0.1); if (i < 0) return null;
+  const ws = t.split(' '), i = ws.findIndex((w, n) => /^[a-z]{5,}$/.test(w) && rnd() < 0.5 + n * 0.1); if (i < 0) return null;  // words only, never a price
   const w = ws[i], j = 1 + Math.floor(rnd() * (w.length - 2));
   ws[i] = rnd() < 0.5 ? w.slice(0, j) + w.slice(j + 1) : w.slice(0, j) + w[j + 1] + w[j] + w.slice(j + 2);
   return ws.join(' ');
 }
-const mess = train.filter(() => rnd() < 0.35).map(e => ({ ...e, text: slip(e.text), weight: 0.5 })).filter(e => e.text);
+const messOf = list => list.filter(() => rnd() < 0.35).map(e => ({ ...e, text: slip(e.text), weight: 0.5, made: true })).filter(e => e.text);
+const mess = messOf(train);
+
+// 3b) practice exam: hide a fifth of the examples, train on the rest, test on the hidden fifth. Do that 5 times so
+//     every example gets hidden once. A second honest score, on far more messages than the exam has.
+const practice = { n: 0, ok: 0, sure: 0, sureOk: 0 };
+for (let fold = 0; fold < 5; fold++) {
+  const keep = train.filter((_, i) => i % 5 !== fold), hidden = train.filter((_, i) => i % 5 === fold);
+  const b = MB.create(MB.train([...keep, ...messOf(keep)], { labels: allLabels, typos }));
+  for (const e of hidden) {
+    const p = b.predict(e.text, { allowed: packs[e.from] || allLabels }), right = p.label === e.label;
+    practice.n++; if (right) practice.ok++; if (p.sure >= 0.8) { practice.sure++; if (right) practice.sureOk++; }
+  }
+}
 
 // 4) train
 const t0 = Date.now();
@@ -93,5 +114,10 @@ console.log(`
   new brain  ${ok}/${exam.length} = ${pc(ok, exam.length)}${oldRules && oldRules.rulesKind ? `\n  old rules  ${okOld}/${exam.length} = ${pc(okOld, exam.length)}` : ''}
   sure (80%+)  ${sureN} messages, right ${pc(sureRight, sureN)}
   unsure       ${unsure} messages → would ask you / Claude
+
+🎓 Practice exam (each example hidden once, ${practice.n} messages)
+  right        ${pc(practice.ok, practice.n)}
+  sure (80%+)  ${practice.sure} messages, right ${pc(practice.sureOk, practice.sure)}
+${copies.length ? `\n⚠️  Left out of training (same as an exam line): ${copies.map(c => `"${c}"`).join(', ')}\n` : ''}${clash.length ? `\n⚠️  Same line, two actions:\n  ${clash.join('\n  ')}\n` : ''}
 ${wrong.length ? 'Wrong:\n' + wrong.join('\n') : 'No mistakes.'}
 `);

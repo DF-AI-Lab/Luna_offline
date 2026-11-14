@@ -1,5 +1,4 @@
 # Diary: appointments and events. One message per line, written how Darren types.
-dentist tue 3pm
 dentist tuesday at 3
 dentist 12th nov 2-3pm
 doctors thurs 10am
@@ -16,7 +15,6 @@ barbers sat morning
 hairdresser friday 1pm
 tennis tonight at 6
 tennis sunday 10am
-football tues 7pm
 gym tomorrow 7am
 swimming wed 6pm
 lunch with mum sunday 1pm
@@ -24,7 +22,6 @@ dinner with sarah friday 7.30pm
 drinks with the lads sat 8pm
 party at jacks saturday
 wedding 14th march
-birthday party sun 2pm
 mums birthday 3rd dec
 dads birthday on the 9th
 meeting with simon monday 10am
@@ -78,7 +75,6 @@ in my diary football sunday
 calendar meeting 1st dec 3pm
 dentist
 doctors appointment
-book in the chiro
 interview next week
 appointment tomorrow
 eye test monday
@@ -88,3 +84,178 @@ covid jab next friday
 smear test 3rd dec
 scan 15th jan
 bins out tonight 8pm
+dentist check up 9am monday
+hygienist fri 2.15
+doctors 8.50 tomorrow
+nurse appointment tues 11.20am
+blood pressure check wed 9.10
+physio 4.45 thursday
+chiro mon 6
+chiro at 5 on friday
+podiatrist 3rd feb 10am
+asthma review thurs 3.40pm
+hearing test sat 9.30
+jab for the dog friday 4.15
+haircut sat 9.30
+barbers tomoz 12
+nails friday 2pm
+tennis thurs 7
+tennis lesson sat 9
+five a side wed 8pm
+football training tues 6.30
+darts night thurs
+snooker with dave weds 7
+gym class mon 6.15pm
+yoga sunday 9am
+run with paul sat 8am
+walk with sarah sun 2
+tea at mums sunday 4
+sunday dinner at mums 1pm
+breakfast with dad sat 9.30
+lunch with emily thurs 12.30
+meal out with sarah sat 7
+pizza night with the kids fri 6pm
+pub quiz weds 8
+pub lunch sunday 1
+pint with paul thurs 8
+drinks after work friday
+stag do 6th june
+hen do 14th feb
+christening sunday 11am
+engagement party sat night
+nans birthday tea 4pm sunday
+kids party sat 1-3pm
+jacks 40th 21st feb
+sarahs birthday meal 8th dec 7pm
+anniversary 2nd may
+kids dentist mon 4.10
+school assembly fri 9.15
+school disco thurs 5-7pm
+sports day 8th july
+nativity 15th dec 2pm
+kids football sat 10
+after school club weds 3.30
+inset day monday
+half term starts 15th feb
+team meeting mon 9.30
+call with emily tues 11
+teams call thurs 2
+catch up with simon wed 10.30
+meeting at the job centre 9th dec 10.20am
+appointment at the bank mon 2pm
+maths lesson tues 6
+exam 12th jan 9am
+driving lesson sat 11
+theory test 3rd march 2pm
+induction monday 9am
+training day 20th jan
+jrht repair visit thurs 8-12
+jrht coming weds morning
+gas safety check 4th dec 10-2
+man coming to fix the boiler mon 9-1
+electrician coming tues 8am
+sofa delivery fri 7-11am
+fridge being delivered saturday
+parcel coming tomorrow 12-2
+bed delivery 3rd dec
+carpet fitter tues 10
+tyres being fitted wed 2pm
+car mot 9am thurs
+car booked in fri 8
+dog groomer sat 12.30
+vets mon 5.20
+vet check up 6th jan
+holiday starts 2nd aug
+flight home 9th aug 4pm
+airport run sat 5am
+train to leeds fri 8.42
+coach to york 10.15 sat
+hotel booked 12th to 14th feb
+day out at the coast sunday
+cinema sat 7.45
+theatre 20th dec 7.30pm
+comedy night fri 8
+match on telly sun 4.30
+bonfire night sat 6
+xmas dinner at mums 25th dec 2pm
+new years eve at steves
+car boot sunday 7am
+market sat morning
+church sunday 10.30
+volunteering thurs 1-4pm
+meet sarah in town sat 12
+meeting dave at costa mon 10
+seeing mum tomorrow afternoon
+mum coming round sunday 2pm
+dad popping over tues evening
+kids at their nans friday night
+babysitting sat night 7pm
+sleepover fri
+pick mum up from hospital wed 11am
+drop kids at football sat 9.45
+take dog to vets mon 9.20am
+10am doctors tomorrow
+7pm football tues
+fri 2pm haircut
+sat 11 tennis
+monday 9am dentist
+tomorrow 4pm call with the bank
+on the 5th at 3pm optician
+dentits mon 2.30
+doctrs thurs 9
+hosptal appt 3rd dec
+tenis sat 10
+metting weds 2pm
+swiming tues 6
+builder coming to look at the wall mon am
+joiner coming thurs pm
+plasterer coming tues am to quote
+sky engineer weds am
+gardener coming fri pm
+man coming about the damp tues
+mick coming to do the fence sat
+emily ringing at 3 on tuesday
+school ringing me monday 10am
+bank calling back thurs at 11
+mum round for tea weds 5
+dave round sat afternoon
+paul coming over fri night
+kids friends round for tea tues 4
+going to dads saturday
+going to the coast sunday
+going to whitby on the 12th
+going out for tea friday 7
+off to york sat morning
+off to the match sat
+off work monday
+day off thurs
+away this weekend
+on holiday 20th to 27th july
+at mums all day sunday
+in leeds tuesday
+working sat 8-4
+overtime sunday 7-3
+night shift fri 10pm
+late shift thurs 2-10
+cup match sun 11
+jacks football tournament sat 9am
+dance class weds 4.15
+bingo with mum mon 7
+aqua fit tues 9.30
+boxing class thurs 6
+kids karate sat 10.15
+jack at a party sat 2-4
+taking jack to the dentist tues 3.45
+dropping the car off mon 8
+picking mum up sat 11
+sat 2pm wedding
+sun 12 lunch at the pub
+tues 9am blood test
+tomoz 10 chiro
+fri 7.30 curry with dave
+job centre mon 9.40
+appointment at the council offices 11.30 weds
+kids jabs thurs 3.20pm
+tattoo sat 1pm
+piercing appointment fri 4
+massage tues 6pm

@@ -34,8 +34,8 @@
     const add = n => { const d = new Date(today); d.setDate(d.getDate() + n); return d; };
     let m;
     if (/\b(today|tonight|this (morning|afternoon|evening))\b/.test(t)) return { date: today, hit: RegExp.lastMatch };
+    if ((m = t.match(/\b(?:the )?day after (?:tomorrow|tmrw|tmr)\b/))) return { date: add(2), hit: m[0] };   // must come before plain "tomorrow"
     if ((m = t.match(/\b(tomorrow|tmrw|tmr)\b/))) return { date: add(1), hit: m[0] };
-    if ((m = t.match(/\bday after tomorrow\b/))) return { date: add(2), hit: m[0] };
     if ((m = t.match(/\bin (\d+) days?\b/))) return { date: add(+m[1]), hit: m[0] };
     if ((m = t.match(/\bnext week\b/))) return { date: add(7), hit: m[0] };
     // 12th nov, 12 november, nov 12
@@ -92,15 +92,43 @@
     return null;
   }
 
+  // Diary only: a time typed with no am/pm ("chiro thurs 5.30", "gas man fri 8-1", "brekkie sun 10").
+  // Too risky for other kinds ("tesco 5.30" is a price), so guess() only calls this once it knows it's the diary.
+  // 1 to 7 is taken as the afternoon (nobody books the chiro for 5 in the morning).
+  function findLooseTime(t, dateHit) {
+    const pmIf = h => (h >= 1 && h <= 7 ? h + 12 : h);
+    const s = dateHit ? t.split(dateHit).join(' § ') : t;      // § marks where the day was
+    let m;
+    if ((m = s.match(/(?:^|\s)(\d{1,2})(?:[.:](\d\d))?\s?-\s?(\d{1,2})(?:[.:](\d\d))?(?=\s|$)/))) {   // 8-12, 9.30-11
+      const h1 = pmIf(+m[1]); let h2 = +m[3]; if (h2 <= h1 && h2 < 12) h2 += 12;
+      const a = hhmm(h1, m[2]), b = hhmm(h2, m[4]);
+      if (a && b) return { time: a, end: b, hit: m[0].trim() };
+    }
+    if ((m = s.match(/(?:^|\s)(\d{1,2})[.:]([0-5]\d)(?=\s|$)/))) { const a = hhmm(pmIf(+m[1]), m[2]); if (a) return { time: a, end: '', hit: m[0].trim() }; }
+    // a bare hour, only right after the day or at the very end: "sun 10", "tomorrow 4"
+    if ((m = s.match(/§\s+(\d{1,2})(?=\s|$)/)) || (m = s.match(/\s(\d{1,2})\s*$/))) {
+      const h = +m[1]; if (h >= 1 && h <= 12) return { time: hhmm(pmIf(h), 0), end: '', hit: m[1] };
+    }
+    return null;
+  }
+
   // ---------- money ----------
+  // Which number is the price? One with pence wins ("2 coffees 7.10" → 7.10), otherwise the biggest ("3 tickets 45" → 45).
+  function plainAmount(t) {
+    const all = []; const re = /(?:^|\s)(\d{1,6}(?:\.\d{1,2})?)(?=\s|$)(?!\s*(?:(?:am|pm|th|st|nd|rd|days?|mins?|minutes|hours?|weeks?|months?|years?)\b|%))/g; let m;
+    while ((m = re.exec(t))) { all.push(m[1]); re.lastIndex = m.index + m[0].length; }
+    if (!all.length) return null;
+    const best = all.find(x => x.includes('.')) || all.slice().sort((a, b) => +b - +a)[0];
+    return { amount: +best, hit: best };
+  }
   function findAmount(t) {
     let m;
     if ((m = t.match(/£\s?(\d{1,6}(?:[.,]\d{1,2})?)/))) return { amount: +m[1].replace(',', '.'), hit: m[0] };
     if ((m = t.match(/\b(\d{1,6}(?:\.\d{1,2})?)\s?(?:quid|pounds?|gbp)\b/))) return { amount: +m[1], hit: m[0] };
     if ((m = t.match(/\b(\d{1,3})p\b/))) return { amount: +m[1] / 100, hit: m[0] };
+    if ((m = t.match(/\b(?:a )?(fiver|tenner)\b/))) return { amount: m[1] === 'fiver' ? 5 : 10, hit: m[0] };
     // a plain number with money words ("add 20 to spends for sky", "spent 12.50 at tesco")
-    if (/\b(spends?|spent|spending|bought|paid|cost|costs|bill|money|wmm)\b/.test(t) &&
-        (m = t.match(/(?:^|\s)(\d{1,6}(?:\.\d{1,2})?)(?=\s|$)(?!\s*(?:am|pm|th|st|nd|rd|days?|mins?|minutes|hours?|%))/))) return { amount: +m[1], hit: m[1] };
+    if (/\b(spends?|spent|spending|bought|paid|cost|costs|bill|money|wmm)\b/.test(t)) return plainAmount(t);
     return null;
   }
 
@@ -121,12 +149,19 @@
     return score >= 0.6 ? best : null;
   }
 
+  // The title: the message minus the bits already pulled out (date, time, £) and the "talking to Luna" words.
   function clean(text, hits) {
     let s = ' ' + text + ' ';
     for (const h of hits.filter(Boolean).sort((x, y) => y.length - x.length)) s = s.split(h).join(' ');
-    s = s.replace(/\b(please|pls|can you|could you|add|put|pop|stick|remind me to|remind me|i need to|need to|i have to|have to|i've got to|got to|gotta|don't forget to|dont forget to|make a note|note down|jot down|i spent|spent|spends|spending|spend|paid for|paid|bought|cost me|costs|cost|for|at|on|in|to|my|the|a|an|today|tonight)\b/gi, m => /^(a|an|the|for|at|on|in|to|my)$/i.test(m) ? ` ${m} ` : ' ');
-    s = s.replace(/\b(to|in|on|into)\s+(my\s+)?(diary|calendar|notes?|to-?do( list)?|list|wmm|money)\b/gi, ' ');
-    s = s.replace(/^\s*(note|task|todo|to-?do|diary|calendar|money)\s*[:\-]\s*/i, ' ');
+    // where he said it goes ("in my diary", "to my to do list", "to spends")
+    const WHERE = /\b(to|in|on|into)\s+(my\s+|the\s+)?(diary|calendar|notes?|to-?\s?do(\s+list)?|list|wmm|spends|money)\b/gi;
+    const saidWhere = WHERE.test(s);
+    s = s.replace(WHERE, ' ');
+    s = s.replace(/^\s*(note|notes|task|todo|to-?\s?do|diary|calendar|money)\s*[:\-]\s*/i, ' ');
+    s = s.replace(/^\s*((please|pls|can you|could you)\s+)*/i, ' ');
+    // "add …" always talks to Luna. "put/pop/stick …" only when he also said where ("put bins out" keeps its "put").
+    s = s.replace(saidWhere ? /^\s*(add|put|pop|stick|log)\b/i : /^\s*add\b/i, ' ');
+    s = s.replace(/\b(please|pls|remind me to|remind me|i need to|need to|i have to|have to|i've got to|ive got to|got to|gotta|don't forget to|dont forget to|make a note|note down|jot down|i spent|spent|spends|spending|spend|paid for|paid|bought|cost me|costs|cost|today|tonight)\b/gi, ' ');
     s = s.replace(/[!?.,;:]+\s*$/, '').replace(/\s+/g, ' ').trim();
     s = s.replace(/^((a|an|the|for|at|on|in|to|my|and)\s+)+/i, '').replace(/(\s+(a|an|the|for|at|on|in|to|my|and|with))+$/i, '').trim();
     return cap(s);
@@ -176,36 +211,44 @@
   }
 
   // force = the kind Darren picked from "Did you mean…?" (skips the guessing, keeps the details)
+  // Darren's own short words ("tomoz", "2moro") → the real word, so the date finder and the title see them too.
+  function ownWords(t) {
+    const W = root.MiniBrainWeights || (typeof require === 'function' ? (() => { try { return require('../brain/weights.js'); } catch (e) { return null; } })() : null);
+    const ty = (W && W.typos) || {};
+    return t.replace(/[a-z0-9]+/g, w => (Object.prototype.hasOwnProperty.call(ty, w) ? ty[w] : w));
+  }
+
   function guess(raw, now, lessons, force) {
     const msg = String(raw || '').trim();
-    const t = ' ' + msg.toLowerCase().replace(/[’']/g, "'") + ' ';
+    const t = ownWords(' ' + msg.toLowerCase().replace(/[’']/g, "'") + ' ');
     const out = { kind: 'task', title: '', text: '', date: '', time: '', end: '', estimate_mins: 0, about: '', category: '', search: '', amount: 0, money_type: '', day: '', confidence: 0.5, why: '', options: [] };
     const hits = [];
     const dt = findDate(t, now), tm = findTime(t), money = findAmount(t);
     if (dt) { out.date = ymd(dt.date); hits.push(dt.hit); }
     if (tm) { out.time = tm.time; out.end = tm.end; hits.push(tm.hit); }
-    // a weekday today with a time already gone = next week (Orbit's rule)
-    if (dt && dt.weekday && tm && tm.time && out.date === ymd(now) && tm.time <= `${pad(now.getHours())}:${pad(now.getMinutes())}`) {
-      const d = new Date(dt.date); d.setDate(d.getDate() + 7); out.date = ymd(d);
-    }
     let m;
     if ((m = t.match(/\b(?:takes?|about|around|for|~)\s*(\d+(?:\.\d)?)\s*(mins?|minutes|m|hours?|hrs?|h)\b/))) {
       out.estimate_mins = Math.round(+m[1] * (/^h/.test(m[2]) ? 60 : 1)); hits.push(m[0]);
     }
 
-    // 1) where he SAID it goes always wins
+    // 1) where he SAID it goes wins... unless he is ASKING ("whats in my diary" is a question, not a diary entry)
+    const asking = /\?\s*$/.test(msg) || QSTART.test(t.trim());
     let said = '';
-    if (/^\s*note\b|\b(in|to|into) (my )?notes?\b|\bnote:|\bmake a note\b|\bjot (it )?down\b/.test(t)) said = 'note';
+    if (asking) said = '';
+    else if (/^\s*notes?\b|\b(in|to|into) (my )?notes?\b|\bnote:|\bmake a note\b|\bjot (it )?down\b/.test(t)) said = 'note';
     else if (/\b(in|to|into|on) (my )?(diary|calendar)\b|^\s*(diary|calendar)\b/.test(t)) said = 'calendar';
-    else if (/\b(on|to) (my )?(to-?do( list)?|list)\b|^\s*(task|todo|to-?do)\b/.test(t)) said = 'task';
+    else if (/\b(on|to) (my )?(to-?\s?do( list)?|list)\b|^\s*(task|todo|to-?\s?do)\b/.test(t)) said = 'task';
     else if (money && /\b(wmm|where's my money|spends?)\b/.test(t)) said = 'money';
 
-    // 2) the kind: his pick > what he said > the Mini Brain > old rules
+    // 2) the kind: his pick > what he said > a past correction > the Mini Brain > old rules
     if (force && LUNA.includes(force)) { out.kind = force; out.confidence = 1; out.why = 'you picked'; }
     else if (said) { out.kind = said; out.confidence = 0.95; out.why = 'you said where'; }
     else {
+      // nearly the same words as something he already corrected → do what he said then
+      const L = lessonFor(msg, lessons || []), fixed = L ? String(L.right).split(' + ')[0].trim() : '';
       const p = think(msg, lessons);
-      if (p) {
+      if (LUNA.includes(fixed)) { out.kind = fixed; out.confidence = 0.9; out.why = 'like one you corrected'; }
+      else if (p) {
         out.kind = p.label; out.confidence = Math.round(p.sure * 100) / 100;
         out.options = p.ranked.slice(0, 3).filter(r => r.p >= 0.05).map(r => r.label);
         out.why = `${Math.round(p.sure * 100)}% sure` + (p.why.length ? ` (${p.why.join(', ')})` : '') + (p.fixes.length ? `, read ${p.fixes.map(f => f[0] + '→' + f[1]).join(' ')}` : '');
@@ -213,6 +256,16 @@
     }
 
     // 3) the details for that kind (Stage 2: rules, they're good at exact bits)
+    // diary with no am/pm time found yet: try the loose kind ("5.30", "8-12", "sun 10")
+    let time = tm;
+    if (out.kind === 'calendar' && !(tm && tm.time)) {
+      const lt = findLooseTime(t, dt && dt.hit);
+      if (lt) { time = lt; out.time = lt.time; out.end = lt.end; hits.push(lt.hit); }
+    }
+    // a weekday today with a time already gone = next week (Orbit's rule)
+    if (dt && dt.weekday && time && time.time && out.date === ymd(now) && time.time <= `${pad(now.getHours())}:${pad(now.getMinutes())}`) {
+      const d = new Date(dt.date); d.setDate(d.getDate() + 7); out.date = ymd(d);
+    }
     if (out.kind === 'question') {
       if (/\b(money|spare|spent|spend|bills?|pots?|card|cash|afford|left till|payday|budget)\b/.test(t)) out.about = 'money';
       else if (/\bnotes?\b|\bideas?\b|\b(code|password|number)\b/.test(t)) out.about = 'notes';
@@ -229,25 +282,28 @@
     if (out.kind === 'money') {
       // money but no £ or money word ("tesco 23.50", "gas 40 friday"): take the plain number that isn't the time/date
       let mo = money;
-      if (!mo) { const rest = hits.reduce((x, h) => h ? x.split(h).join(' ') : x, t); const pm = rest.match(/(?:^|\s)(\d{1,6}(?:\.\d{1,2})?)(?=\s|$)/); if (pm) mo = { amount: +pm[1], hit: pm[1] }; }
+      if (!mo) mo = plainAmount(hits.reduce((x, h) => h ? x.split(h).join(' ') : x, t));
       const money2 = mo;
       out.amount = money2 ? Math.round(money2.amount * 100) / 100 : 0;
       if (money2) hits.push(money2.hit);
       if ((m = t.match(/\b(paid|pay|paying) (£?\d[\d.,]* )?off (the |my )?(credit )?card\b|\bcard payment\b/))) { out.money_type = 'paid_off'; hits.push(m[0]); }
       else if ((m = t.match(/\b(on|with) (the |my )?(credit )?card\b|\bcredit card\b/))) { out.money_type = 'card'; hits.push(m[0]); }
-      else if ((m = t.match(/\b(a|per|every) month\b|\bmonthly\b|\bdirect debit\b|\bstanding order\b|\bdd\b|\bbill\b|\bsubscription\b/))) {
-        out.money_type = 'bill'; hits.push(m[0]);
+      // a bill that comes round every month. The word "bill" alone isn't enough ("vet bill 90" is a one-off spend):
+      // it needs "a month" / "monthly" / "direct debit"..., or "bill" plus a day of the month ("on the 12th").
+      else if ((m = t.match(/\b(a|per|every) month\b|\bmonthly\b|\bdirect debit\b|\bstanding order\b|\bdd\b|\bsubscription\b|\b(new|add) bill\b/)) ||
+               (/\bbill\b/.test(t) && /\b(?:on )?the \d{1,2}(?:st|nd|rd|th)\b/.test(t) && !/\b(coming out|going out|due)\b/.test(t) && (m = t.match(/\bbill\b/)))) {
+        out.money_type = 'bill'; hits.push(m[0], 'new bill', 'add bill', 'a month', 'per month', 'every month', 'monthly', 'direct debit', 'standing order', ' dd ', 'subscription', ' bill ');
         const dd = t.match(/\b(?:on )?the (\d{1,2})(?:st|nd|rd|th)?\b/) || t.match(/\bday (\d{1,2})\b/);
         if (dd && +dd[1] >= 1 && +dd[1] <= 31) { out.day = String(+dd[1]); hits.push(dd[0]); out.date = ''; }
         else if (/\bvaries\b/.test(t)) { out.day = 'varies'; hits.push('varies'); }
       }
       else if (/\b(coming out|to come out|going out|will go|due|upcoming|next|not paid yet)\b/.test(t) || (out.date && out.date > ymd(now))) out.money_type = 'upcoming';
       else out.money_type = 'spend';
-      hits.push('wmm', "where's my money", 'credit card', 'card', 'coming out', 'going out', 'quid', 'pounds');
+      hits.push('wmm', "where's my money", 'credit card', ' card ', 'coming out', 'comes out', 'to come out', 'going out', 'goes out', ' bill ', ' due ', 'quid', 'pounds');
       if (!out.amount) { out.confidence = Math.min(out.confidence, 0.4); out.why += ', no amount'; }
     }
     if (out.kind === 'note') {
-      out.text = msg.replace(/^\s*(please\s+)?(add|put|save|write)?\s*(this\s+)?(to|in|into)?\s*(my\s+)?notes?\s*[:\-]?\s*/i, '')
+      out.text = msg.replace(/^\s*(please\s+)?(add|put|save|write)?\s*(this\s+)?(to|in|into)?\s*(my\s+)?notes?\s*[:\-]?\s*(to self\s*[:\-]?\s*)?/i, '')
         .replace(/\s*,?\s*(add|put|save)?\s*(it\s+)?(to|in|into) (my )?notes?\s*$/i, '').trim() || msg;
     }
     out.title = clean(t, hits) || cap(msg);
@@ -256,7 +312,7 @@
     return out;
   }
 
-  const api = { readPrompt, guess, rulesKind, getBrain, findDate, findTime, findAmount, ymd, LUNA };
+  const api = { readPrompt, guess, rulesKind, getBrain, findDate, findTime, findLooseTime, findAmount, ymd, LUNA };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.LunaRules = api;
 })(typeof window !== 'undefined' ? window : globalThis);

@@ -1,9 +1,9 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '1.06';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  const VERSION = '1.07';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
   // "What's new" lines for THIS version: shown in the update sheet on phones still on an older version. Short, plain.
-  const NOTES = ['New Mini Brain: learns from your taps, copes with typos', 'Not sure? It asks Did you mean… with buttons', 'Asks Claude only under 80% sure'];
+  const NOTES = ['Smarter Mini Brain: 4x more examples, right far more often', 'Diary times without am/pm now work (chiro thurs 5.30)', 'Asking whats in my diary no longer adds to the diary'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');

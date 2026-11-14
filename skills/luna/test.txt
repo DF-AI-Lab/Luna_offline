@@ -1,4 +1,5 @@
 # The exam: NEVER trained on. Written differently from the examples on purpose. label | message
+# The trainer leaves out any example that reads the same as a line in here, and tells you.
 calendar | dentist weds 4pm
 calendar | doctors appt 2nd dec 9am
 calendar | chiro thurs 5.30
@@ -26,7 +27,6 @@ task | send mum the photos
 note | the safe code is 7788
 note | wifi for the caravan is sunny22
 note | idea luna could do voice
-note | remember to floss
 note | the bulbs are e14 small screw
 note | kids school number 01904 555123
 note | my nhs number is 123 456 7890
@@ -53,3 +53,382 @@ other | yogurt use by thursday
 other | chicken in the freezer
 other | milk goes off tomorrow
 other | leftover chilli in the fridge
+calendar | dentist tomoz 9.15
+calendar | mot tues 8am
+calendar | nans 80th sat 2pm
+calendar | quiz night thurs 8pm
+calendar | gas man coming fri 8-1
+calendar | kids swimming lesson mon 4.30
+calendar | smear weds 9.40am
+calendar | chiro 2moro at 4
+calendar | pub with steve fri night
+calendar | tesco delivery sat 10-11am
+calendar | curry with the lads sat 7.30
+calendar | hospital scan 9th jan 11.15
+calendar | york learning maths exam 14th jan 9.30am
+calendar | brekkie with mum sun 10
+calendar | jrht inspection tues 2pm
+calendar | funeral friday 11am
+calendar | car in garage mon 8.30
+calendar | school trip 4th dec
+calendar | phsyio weds 3pm
+calendar | eye test at specsavers sat 11.20
+calendar | boiler service 22nd nov morning
+calendar | xmas party 18th dec 7pm
+calendar | pick up sarah from station fri 6pm
+calendar | window cleaner coming thurs
+calendar | 3pm dentist thurs
+calendar | thurs 10am meeting with emily
+task | pay gas bill friday
+task | book the vets for the dog
+task | ring specsavers about glasses
+task | get a card for nans 80th
+task | take parcel to post office
+task | top up the gas meter
+task | bleed the radiators
+task | sort tv licence
+task | ask simon about the countertops
+task | defrost chicken for tea
+task | fill the car up
+task | change the lightbulb in the hall
+task | pay window cleaner
+task | cancel sky
+task | ring bank about the card
+task | order kids school shoes
+task | take bins out tonight
+task | return jeans to primark
+task | need to get a haircut
+task | dont forget kids pe kit monday
+task | look for a cheaper phone deal
+task | put a wash on
+task | finsh the cv
+task | download the bank statement
+task | pick up prescription tomoz
+task | remind me to book the mot
+task | get quote for the fence
+task | message dave about sat
+task | unblock the sink
+task | must ring nan
+note | sarahs flat is number 14
+note | kids are size 5 shoes now
+note | oil for the car is 5w30
+note | nan likes dark chocolate
+note | parked in bay 42
+note | locker number 118 combo 3141
+note | idea for app shopping list that sorts by aisle
+note | emily said exam is in january
+note | tyre pressure should be 32
+note | bin day is thursdays now
+note | the hoover bags are type h
+note | remember dave owes me for the tickets
+note | printer ink is hp 305
+note | landlords email is on the fridge
+note | good plumber is called mick
+note | thought maybe use pots for xmas money
+note | chiro said ice it twice a day
+note | broadband account number 55667788
+note | dentist said come back in 6 months
+note | recipe sausage casserole from mum
+note | the car takes diesel
+note | key safe code 1357
+note | note to self check the loft hatch
+note | remember bins are fortnightly
+money | gas 40 friday
+money | tesco crisps 1.50
+money | costa 3.85
+money | spent 14 in wetherspoons
+money | 20 quid petrol
+money | tenner on the lottery
+money | bought trainers 55 on the card
+money | paid 300 off the credit card
+money | sky 42 a month on the 8th
+money | contents insurance 38 monthly
+money | b&m 12.99
+money | home bargains 8.40
+money | chinese 26.50
+money | 4.50 meal deal
+money | parking 3.20
+money | kids dinner money 15
+money | paid the window cleaner 12
+money | electric 60 coming out on the 5th
+money | amazon prime 8.99 a month
+money | haircut 14
+money | mcdonalds 11.47 for the kids
+money | nandos 34 on card
+money | spent 2.80 on milk and bread
+money | screwfix 18.75 paint
+money | tv licence 14.54 on the 1st
+money | dog food 22 from pets at home
+money | pint 4.80
+money | 65 on food shop at asda
+money | dentist cost 26.80
+question | what am i doing sat
+question | have i got anything on tomoz
+question | when is my haircut
+question | how much did i spend on petrol
+question | whats coming out this week
+question | can i afford new trainers
+question | am i busy thurs
+question | what time is tennis
+question | any appointments this week
+question | what was the gate code
+question | did i pay the gas bill
+question | how much left on card
+question | whats next
+question | anything due
+question | is the dentist this week
+question | where did i park
+question | wots on tonite
+question | do i owe anything on the card
+question | what bills come out friday
+question | show spends
+question | what do i need from the shop
+question | how long till payday
+question | free on sunday?
+question | when does the mot run out
+question | remind me what the wifi code is
+other | crisps use by fri
+other | mince in the fridge use by weds
+other | opened ham today
+other | half a lasagne in the freezer
+other | eggs best before 2nd dec
+other | leftover chinese in fridge
+other | bread goes off thurs
+other | froze the chicken breasts
+other | cheese use by 30th
+other | yoghurts best before sat
+other | 2 pizzas in freezer
+other | cooked chicken in fridge from sunday
+other | sausages go off tomoz
+other | milk opened mon
+other | salmon use by 16th nov
+other | soup leftover from tea
+other | coleslaw out of date
+other | put mince in freezer
+# --- second batch: new shops, names and odd phrasings ---
+calendar | osteopath tues 4.15
+calendar | kids orthodontist 19th nov 3.50pm
+calendar | karaoke sat night at the legion
+calendar | sarah round for tea thurs 6
+calendar | bin lorry strike monday
+calendar | house viewing weds 1.30
+calendar | zumba mon 7pm
+calendar | wedding reception 6th june 7pm
+calendar | roofer coming to look at the gutter fri am
+calendar | weds 9am smear
+calendar | jacks cup final sun 10.30
+calendar | fireworks at the racecourse 5th nov 6.30
+calendar | going to mums on sunday
+calendar | off to leeds sat
+calendar | away 12th to 19th july
+calendar | hospital 9am tomoz
+calendar | emily ringing me at 2 tomorrow
+calendar | golf with dave sat 7.40am
+calendar | tatoo appointment 3rd feb
+calendar | uc appointment mon 10.40
+task | grab some eggs
+task | nip to the chemist
+task | sort out a birthday cake for jack
+task | rehang the bathroom door
+task | ring the orthodontist to rearrange
+task | swap the winter tyres
+task | get jack some football boots
+task | wrap the presents
+task | tell sarah about sunday
+task | hand in the form at school
+task | check if the parcel came
+task | find out when bin day is
+task | switch energy supplier
+task | sell the old bike on ebay
+task | list the sofa on facebook
+task | pay dave back for the tickets
+task | pay for the kids photos by friday
+task | tax the car
+task | put petrol in the car
+task | make a dentist appointment
+task | arrange a boiler service
+task | jet wash the patio
+task | sweep the yard
+task | need bin bags and washing up liquid
+task | eggs milk bread
+task | speak to jrht about the windows
+task | ring the gas people monday morning
+task | feed next doors cat this week
+task | shave
+task | untangle the xmas lights
+note | the dishwasher is a beko
+note | sarah works tuesdays and thursdays
+note | dave moved to number 9
+note | the kids love that pasta bake
+note | radiator key is in the junk drawer
+note | jack needs a 2b pencil for art
+note | size 8 in those trainers
+note | combination for the bike lock 2244
+note | hot water comes on at 6
+note | the gas card is in my wallet
+note | mums carer comes on wednesdays
+note | emilys surname is hartley
+note | neighbours dog is called bruno
+note | sarah wants to go to whitby
+note | read that oats are good for cholesterol
+note | idea put a hook by the door for keys
+note | sky box needs a reset every few weeks
+note | aldi do good sourdough
+note | costa wifi is free
+note | tesco shuts at 10
+note | i owe dave 15
+note | paul owes me 30 for the gig
+note | gp said blood test results take a week
+note | last service was at 42000 miles
+note | i think the shed roof leaks
+note | windows measured 90 by 120
+note | bday list for jack bike helmet and goalie gloves
+note | luna version 1.06 has the mini brain
+note | jrht out of hours number 0800 123 456
+note | allergic to penicillin
+money | waterstones 9.99
+money | 7.50 barbers
+money | card factory 3.49
+money | jd sports 60 on the card
+money | spoons 22.15
+money | papa johns 18
+money | 12.40 lidl
+money | gave sarah 20 for petrol
+money | haribo 1.25
+money | 35 for jacks football boots
+money | o2 bill 21 a month on the 19th
+money | fiver for the raffle
+money | 2 coffees 7.10
+money | paid 45 for the osteopath
+money | tenner petrol
+money | owt from the bakery 3.20
+money | b&q 14.50 screws
+money | kids ice creams 6
+money | paid 500 off the barclaycard
+money | train 31.70 to manchester
+money | 9 quid on a kebab
+money | rent 525
+money | 60 on the gas card
+money | halfords 27.99 wipers
+money | council tax 135 going out tomorrow
+money | mcdonalds breakfast 5.89
+money | 15.75 at the chippy
+money | amazon 7.99 batteries on card
+money | paid sarah back 40
+money | yorkshire water 34 dd on the 9th
+question | whats on thurs
+question | am i doing owt sat
+question | who is coming on monday
+question | what did i spend at b&q
+question | whats my next bill
+question | how much is council tax
+question | have i got owt on tonight
+question | what was sarahs flat number
+question | where is the radiator key
+question | when is jacks cup final
+question | is the rent paid
+question | do i need milk
+question | whats in my notes about jack
+question | how much has gone on takeaways
+question | what jobs are left this week
+question | am i meant to be anywhere today
+question | have i missed anything
+question | what size is jack in boots
+question | did the osteopath go in the diary
+question | which bills are monthly
+question | how are my spends looking
+question | whats the damage this month
+question | anything need paying
+question | why is my money low
+question | when did i last pay the window cleaner
+other | half a cucumber in the fridge
+other | naan breads in the freezer
+other | turkey mince use by 21st
+other | quiche best before thurs
+other | opened the passata sunday
+other | fish pie leftover in fridge
+other | 6 eggs left
+other | kiev in the freezer
+other | brie going off
+other | stir fry veg use by tomoz
+other | houmous opened weds
+other | froze 2 loaves
+other | tub of soup in freezer from mon
+other | cooked ham use by sat
+other | milk is off
+other | gravy granules nearly out
+other | crumpets best before 17th
+other | chicken kievs out of date fri
+other | double cream opened today
+other | defrosting sausages for tea
+# --- third batch: written last and run once, blind ---
+calendar | chiropodist fri 10.20
+calendar | mums 70th meal sat 6.30pm
+calendar | pe kit day tomorrow
+calendar | catch up with emily thurs 1pm
+calendar | car valet tues 9
+calendar | jack sleepover at bens sat
+calendar | leeds match 28th dec 3pm
+calendar | bloods at the surgery mon 8.10am
+calendar | tip run with dave sun 9am
+calendar | sarah away with work 3rd to 5th
+calendar | landlord inspection 2nd dec 1pm
+calendar | maths tutor weds 4
+task | renew jacks passport
+task | order a skip
+task | get jack a haircut before school photos
+task | ring nan back tonight
+task | fix the wobbly shelf
+task | chase the gp for results
+task | return library books by fri
+task | defrost the mince for tomorrow
+task | sort xmas cards
+task | glue the chair leg
+task | ask paul for the 20 he owes
+task | buy a 9v battery
+note | spare room radiator leaks a bit
+note | jack came 2nd in the race
+note | microwave is 800 watts
+note | the meter cupboard key is on the hook
+note | sarah parked at the multi storey level 4
+note | emily thinks the exam is 2 papers
+note | paint for the hall was 2.5 litres
+note | idea charge the kids for lifts lol
+note | bens mum is called kate
+note | netflix password changed to pizza99
+note | nan in ward 12 bed 4
+note | last haircut was 3 weeks ago
+money | wilko 4.75 bin bags
+money | 3 for the car park
+money | jacks school photos 22
+money | spent 31 at the range
+money | pizza 12.99 on the card
+money | twenty quid to dave
+money | giffgaff 10 a month on the 27th
+money | mot and service 210 on credit card
+money | paid 60 off the visa
+money | sausage sarnie 3.20
+money | water bill 34 due on the 9th
+money | bought jack a ball 8
+question | whats the plan sat
+question | how much on takeaways this month
+question | when did i last see the chiro
+question | any ideas saved for luna
+question | have i paid nan back
+question | whats jack doing on sunday
+question | is there owt left to pay
+question | what did the gp say
+question | show me this weeks diary
+question | am i at work tomorrow
+question | did i note the paint colour
+question | how many notes have i got
+other | pork pies use by tues
+other | half a tub of cream in the fridge
+other | fish cakes in freezer
+other | opened the gammon sat
+other | 3 portions of soup frozen
+other | grapes going off
+other | pitta bread best before 14th
+other | cooked sausages in fridge since mon
+other | butter running low
+other | chicken curry leftover use by weds

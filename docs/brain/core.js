@@ -6,6 +6,7 @@
 //   2. spell    fix words it doesn't know:            "dentsit"              → "dentist"
 //   3. swap     prices/dates/times → tokens:          "3pm"                  → "[time]"
 //   4. clues    words + word pairs + 3-letter chunks: "dentist" → w:dentist, c:<de, c:den, ...
+//               + "a word I hardly know" ([new]) + "how many numbers" (n:one / n:many)
 //   5. score    add up each action's weights for the clues; biggest total wins; % sure = softmax
 (function (root) {
   'use strict';
@@ -37,19 +38,38 @@
     }
     return d[a.length][b.length];
   }
+  // short words: is v just w with two letters swapped, or one letter dropped/added in the middle?
+  function safeShort(w, v) {
+    if (w.length === v.length) {                       // same length → only a swap counts (braed → bread)
+      let i = 0; while (i < w.length && w[i] === v[i]) i++;
+      return i < w.length - 1 && w[i] === v[i + 1] && w[i + 1] === v[i] && w.slice(i + 2) === v.slice(i + 2);
+    }
+    const [a, b] = w.length < v.length ? [w, v] : [v, w];   // a is one shorter
+    if (b.length - a.length !== 1) return false;
+    let i = 0; while (i < a.length && a[i] === b[i]) i++;
+    return i < a.length && a.slice(i) === b.slice(i + 1);   // the extra letter is not the last one
+  }
   // Only fix a word it has never seen. Darren's own typo list first, then the closest known word
-  // (1 slip for 4-6 letters, 2 for 7+). Ties go to the word seen most in training.
+  // (1 slip for 4-7 letters, 2 for 8+). Ties go to the longer word, then the word seen most in training.
+  // Safety rules, so real words and shop names are left alone ("costa" is not "cost", "chinese" is not "cheese"):
+  //   - only fix TO a word it knows well (seen 3+ times), never to a word it saw once
+  //   - the first letter must match (people rarely get the first letter wrong)
+  //   - a short word (4-5 letters) is only fixed for swapped letters or a missing/extra letter in the MIDDLE,
+  //     never by sticking a letter on the end or changing one
   function spellFix(words, vocab, typos) {
     const fixes = [];
+    const has = (o, k) => !!o && Object.prototype.hasOwnProperty.call(o, k);   // so a word like "constructor" can't trip it up
     const out = words.map(w => {
-      if (typos && typos[w]) { fixes.push([w, typos[w]]); return typos[w]; }
-      if (!vocab || vocab[w] || w.length < 4 || /\d|£/.test(w)) return w;
-      const max = w.length >= 7 ? 2 : 1;
+      if (has(typos, w)) { fixes.push([w, typos[w]]); return typos[w]; }
+      if (!vocab || has(vocab, w) || w.length < 4 || /\d|£/.test(w)) return w;
+      const max = w.length >= 8 ? 2 : 1;
       let best = null, bestD = max + 1, bestN = 0;
       for (const v in vocab) {
-        if (v.length < 3) continue;
+        if (v.length < 3 || v[0] !== w[0] || vocab[v] < 3) continue;
+        if (w.length <= 5 && !safeShort(w, v)) continue;
         const dd = distance(w, v, max);
-        if (dd < bestD || (dd === bestD && vocab[v] > bestN)) { best = v; bestD = dd; bestN = vocab[v]; }
+        const n = vocab[v] + (v.length > w.length ? 1000 : 0);   // a longer word wins a tie (a dropped letter is the usual slip)
+        if (dd < bestD || (dd === bestD && n > bestN)) { best = v; bestD = dd; bestN = n; }
       }
       if (best && bestD <= max) { fixes.push([w, best]); return best; }
       return w;
@@ -61,13 +81,18 @@
   // So it learns "has a price" instead of every price there is.
   const MON = '(?:jan|feb|mar|apr|may|jun|jul|aug|sep|sept|oct|nov|dec)[a-z]*';
   const SWAPS = [
-    [/£ ?\d+(?:[.,]\d{1,2})?|\b\d+(?:\.\d{1,2})? ?(?:quid|pounds?|gbp)\b|\b\d{1,3}p\b|\b(?:a fiver|a tenner)\b/g, ' [money] '],
+    [/£ ?\d+(?:[.,]\d{1,2})?|\b\d+(?:\.\d{1,2})? ?(?:quid|pounds?|gbp)\b|\b\d{1,3}p\b|\b(?:a )?(?:fiver|tenner)\b/g, ' [money] '],
     [/\b\d{1,2}(?:[:.]\d\d)? ?(?:am|pm)? ?(?:-|to|till|until) ?\d{1,2}(?:[:.]\d\d)? ?(?:am|pm)\b/g, ' [time] '],
     [/\b\d{1,2}(?:[:.]\d\d)? ?(?:am|pm)\b|\b(?:[01]?\d|2[0-3]):[0-5]\d\b|\b(?:noon|midday)\b/g, ' [time] '],
     [new RegExp(`\\b\\d{1,2}(?:st|nd|rd|th)?(?: of)? ${MON}\\b|\\b${MON} \\d{1,2}(?:st|nd|rd|th)?\\b|\\b\\d{1,2}/\\d{1,2}(?:/\\d{2,4})?\\b|\\bthe \\d{1,2}(?:st|nd|rd|th)\\b|\\b\\d{1,2}(?:st|nd|rd|th)\\b`, 'g'), ' [date] '],
     [/\b(?:today|tonight|tomorrow|tmrw|tmr|tomoz)\b/g, ' [date] '],
-    [/\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|weds|thu|thur|thurs|fri)\b/g, ' [day] '],
-    [/\b\d+(?:\.\d+)?\b/g, ' [num] '],
+    [/\b(?:monday|tuesday|wednesday|thursday|friday|saturday|sunday|mon|tue|tues|wed|weds|thu|thur|thurs|fri|sat|sun)\b/g, ' [day] '],
+    [/\b\d+(?:\.\d+)? ?(?:mins?|minutes?|hours?|hrs?|days?|weeks?|wks?|months?|years?|yrs?)\b/g, ' [howlong] '],  // "2 hours", "6 months"
+    [/(^| )\d{1,2}-\d{1,2}(?= |$)/g, ' [time] '],                          // "8-12" = a time slot
+    [/\b(?=[a-z0-9]*\d)(?=[a-z0-9]*[a-z])[a-z0-9]+\b/g, ' [code] '],         // letters+digits mixed: "yx19", "e14", "sunny22"
+    [/\b\d{4,}\b|\b\d+(?:-\d+)+\b/g, ' [long] '],                           // long numbers: phone, pin, account, ref
+    [/\b\d+\.\d\d?\b/g, ' [dec] '],                                         // 4.20, 5.30: mostly a price, sometimes a time
+    [/\b\d+\b/g, ' [num] '],                                                // any other whole number
   ];
   function swap(s) { for (const [re, tok] of SWAPS) s = s.replace(re, tok); return s.replace(/\s+/g, ' ').trim(); }
 
@@ -75,21 +100,34 @@
   function read(text, vocab, typos) {
     const t = tidy(text);
     const sf = spellFix(t.split(' ').filter(Boolean), vocab, typos);
-    return { tokens: swap(sf.words.join(' ')).split(' ').filter(Boolean), fixes: sf.fixes };
+    const tokens = swap(sf.words.join(' ')).split(' ').filter(Boolean);
+    if (/\?/.test(String(text))) tokens.push('[?]');     // a question mark is a clue too
+    return { tokens, fixes: sf.fixes };
   }
 
   // ---------- 4. clues (features) ----------
   // w: the word itself · f: the first word ("what…", "buy…") · p: two words together ("on card")
   // c: 3-letter chunks, so a bad spelling still shares most chunks with the real word ("vegtables" ~ "vegetables")
-  const CHUNK = 0.3; // a chunk counts less than a whole word
-  function features(tokens) {
+  // [new]: a word seen once or never in training (a new shop, a name). It can't know the word, but it CAN learn
+  //        the shape: "[new] [dec]" is nearly always money, "[new] [day] [time]" is nearly always the diary.
+  // n: how many numbers there are. One number → often a price. Several → often a note (sizes, phone numbers).
+  const CHUNK = 0.5; // a chunk counts half as much as a whole word
+  const NUMBERS = { '[num]': 1, '[dec]': 1, '[long]': 1, '[code]': 1 };
+  function features(tokens, vocab) {
     const f = new Map();
     const add = (k, v) => f.set(k, (f.get(k) || 0) + v);
+    const isNew = t => !!vocab && t[0] !== '[' && !(vocab[t] > 1);
+    const name = t => (isNew(t) ? '[new]' : t);
     add('bias', 1);
+    const n = tokens.filter(t => NUMBERS[t]).length;
+    if (n) add(n > 1 ? 'n:many' : 'n:one', 1);
     tokens.forEach((t, i) => {
+      const next = tokens[i + 1];
       add('w:' + t, 1);
       if (i === 0) add('f:' + t, 1);
-      if (i < tokens.length - 1) add('p:' + t + '_' + tokens[i + 1], 1);
+      if (next) add('p:' + t + '_' + next, 1);
+      if (isNew(t)) { add('w:[new]', 1); if (i === 0) add('f:[new]', 1); }
+      if (next && (isNew(t) || isNew(next))) add('p:' + name(t) + '_' + name(next), 1);
       if (t[0] !== '[' && t.length >= 3) { const s = '<' + t + '>'; for (let j = 0; j + 3 <= s.length; j++) add('c:' + s.substr(j, 3), CHUNK); }
     });
     return f;
@@ -118,7 +156,7 @@
     // allowed = the actions this app's skill pack has (one brain, many apps)
     function predict(text, opts) {
       const allowed = (opts && opts.allowed) || labels;
-      const r = read(text, vocab, typos), feats = features(r.tokens);
+      const r = read(text, vocab, typos), feats = features(r.tokens, vocab);
       const s = scores(feats);
       const idx = labels.map((_, i) => i).filter(i => allowed.includes(labels[i]));
       const p = softmax(idx.map(i => s[i]));
@@ -132,20 +170,25 @@
       return { label: top.label, sure: top.p, gap: top.p - second.p, ranked, tokens: r.tokens, fixes: r.fixes, why };
     }
     // One nudge: up for the right action, down for the others, by how wrong it was (that's all "learning" is).
-    function nudge(layer, feats, right, rate) {
+    // skip = clues to leave alone (see learn)
+    function nudge(layer, feats, right, rate, skip) {
       const s = scores(feats), p = softmax(s), y = labels.indexOf(right);
       for (const [k, v] of feats) {
+        if (skip && skip(k)) continue;
         const row = layer[k] || (layer[k] = labels.map(() => 0));
         for (let i = 0; i < labels.length; i++) row[i] += rate * v * ((i === y ? 1 : 0) - p[i]);
       }
       return p[y];
     }
     // Live learning (on the phone, at once): nudge Darren's own layer until this message comes out right and sure.
+    // It only nudges the clues that belong to THIS message's words. The general clues (bias, [new], number count)
+    // are left alone, or 20 "note" taps would slowly make every message lean towards "note".
+    const GENERAL = k => k === 'bias' || k[0] === 'n' || k.indexOf('[new]') >= 0;
     function learn(text, right, opts) {
       if (!labels.includes(right)) return false;
-      const feats = features(read(text, vocab, typos).tokens);
+      const feats = features(read(text, vocab, typos).tokens, vocab);
       const want = (opts && opts.sure) || 0.9;
-      for (let n = 0; n < 30; n++) if (nudge(mine, feats, right, 0.5) >= want) break;
+      for (let n = 0; n < 30; n++) if (nudge(mine, feats, right, 0.5, GENERAL) >= want) break;
       return true;
     }
     return {
@@ -159,14 +202,16 @@
   // ---------- training (runs in node, now and then, from the examples + Darren's logs) ----------
   // examples: [{text, label}] → a model (plain JSON). Softmax regression with small nudges, many passes.
   function train(examples, opts) {
-    opts = Object.assign({ epochs: 30, rate: 0.2, l2: 1e-5, seed: 7, typos: {}, minWeight: 0.04 }, opts || {});
+    opts = Object.assign({ epochs: 30, rate: 0.2, l2: 1e-5, seed: 7, typos: {}, minWeight: 0.12 }, opts || {});
     const labels = opts.labels || [...new Set(examples.map(e => e.label))].sort();
+    // words it knows = words in the real examples (not the made-up typo copies, or typos would count as "known")
     const vocab = {};
-    for (const e of examples) for (const w of tidy(e.text).split(' ')) if (w && !/\d/.test(w)) vocab[w] = (vocab[w] || 0) + 1;
+    for (const e of examples) if (!e.made) for (const w of tidy(e.text).split(' ')) if (w && !/\d/.test(w)) vocab[w] = (vocab[w] || 0) + 1;
     const brain = create({ labels, w: {}, vocab: {}, typos: {} });
     const W = {};
     brain.setMine(W);                                       // train straight into a layer
-    const rows = examples.map(e => ({ f: features(read(e.text, null, opts.typos).tokens), y: e.label, k: e.weight || 1 }));
+    // every example goes through the same steps as a real message (tidy, spell fix, swap, clues)
+    const rows = examples.map(e => ({ f: features(read(e.text, vocab, opts.typos).tokens, vocab), y: e.label, k: e.weight || 1 }));
     let seed = opts.seed; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
     for (let ep = 0; ep < opts.epochs; ep++) {
       for (let i = rows.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [rows[i], rows[j]] = [rows[j], rows[i]]; }
@@ -174,7 +219,7 @@
       for (const r of rows) brain._nudge(W, r.f, r.y, rate * r.k);
       if (opts.l2) for (const k in W) for (let i = 0; i < labels.length; i++) W[k][i] *= (1 - opts.l2);
     }
-    // keep it small: drop clues that hardly point anywhere, round to 3 places
+    // keep it small: drop clues that hardly point anywhere, round to 2 places
     const w = {};
     for (const k in W) {
       if (Math.max(...W[k].map(Math.abs)) < opts.minWeight) continue;

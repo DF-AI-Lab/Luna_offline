@@ -1,0 +1,55 @@
+# The exam: NEVER trained on. Written differently from the examples on purpose. label | message
+calendar | dentist weds 4pm
+calendar | doctors appt 2nd dec 9am
+calendar | chiro thurs 5.30
+calendar | footy sat 3pm
+calendar | lunch with dave tues 1pm
+calendar | optitian friday 11am
+calendar | haircut next tues 2pm
+calendar | meeting with jrht 1st dec
+calendar | bday party sat 4pm
+calendar | vet appointment wed
+calendar | gym sunday morning 8am
+calendar | intervew tues 10am
+task | buy toilet roll
+task | ring the gp
+task | fix the leaking tap
+task | book a table for sat
+task | email the landlord
+task | clean the fridge
+task | sort out the loft
+task | get dog food
+task | renew the car tax
+task | chase jrht about the toilet
+task | by batteries
+task | send mum the photos
+note | the safe code is 7788
+note | wifi for the caravan is sunny22
+note | idea luna could do voice
+note | remember to floss
+note | the bulbs are e14 small screw
+note | kids school number 01904 555123
+note | my nhs number is 123 456 7890
+note | jacket size large
+money | tesco 23.50
+money | spent 9 at costa
+money | £30 petrol
+money | 15 on the card for amazon
+money | paid 50 off card
+money | broadband 30 a month on the 12th
+money | greggs 4.20 lunch
+money | aldi £41.10
+money | spent 6 quid on the bus
+money | water bill 28 coming out tuesday
+question | whats on sat
+question | am i free tues night
+question | how much have i got left
+question | any bills left
+question | show my tasks
+question | whats due tomorrow
+question | what notes do i have about the car
+question | hows money looking
+other | yogurt use by thursday
+other | chicken in the freezer
+other | milk goes off tomorrow
+other | leftover chilli in the fridge

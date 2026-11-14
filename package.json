@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "python3 tools/build_web.py",
-    "test": "node --test tests/brain.test.js && node tests/web.e2e.js"
+    "train": "node tools/train.js",
+    "test": "node --test tests/brain.test.js tests/minibrain.test.js && node tests/web.e2e.js"
   }
 }

@@ -40,3 +40,19 @@ test('reads Orbit prompt', () => {
   const r = R.readPrompt(p);
   assert.equal(r.msg, 'buy milk'); assert.equal(r.lessons[0].right, 'note'); assert.equal(r.now.getHours(), 20);
 });
+test('unsure → offers options to ask', () => {
+  const got = g('jacket size large');
+  assert.ok(got.confidence < 0.8); assert.ok(got.options.length >= 2); assert.ok(got.options.includes('note'));
+});
+test('Did you mean pick forces the kind, keeps details', () => {
+  const got = R.guess('gas 40 friday', NOW, [], 'money');
+  assert.equal(got.kind, 'money'); assert.equal(got.amount, 40); assert.equal(got.money_type, 'upcoming');
+});
+test('typos still work', () => {
+  assert.equal(g('dentsit tues 3pm').kind, 'calendar');
+  assert.equal(g('spnet 12 at tesco').kind, 'money');
+});
+test('money with no £ still gets the amount', () => {
+  const a = g('tesco 23.50'); assert.equal(a.kind, 'money'); assert.equal(a.amount, 23.5); assert.equal(a.title, 'Tesco');
+  const b = g('greggs 4.20 lunch'); assert.equal(b.amount, 4.2);
+});

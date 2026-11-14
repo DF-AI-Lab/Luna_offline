@@ -1,0 +1,90 @@
+# Diary: appointments and events. One message per line, written how Darren types.
+dentist tue 3pm
+dentist tuesday at 3
+dentist 12th nov 2-3pm
+doctors thurs 10am
+gp appointment friday 9.30am
+docs appt monday at 11
+hospital appointment 4th dec 2pm
+chiro wed 5.30pm
+chiropractor tuesday 6pm
+physio next monday 10am
+optician sat 11am
+opticians appointment 20th nov
+haircut thursday 10am
+barbers sat morning
+hairdresser friday 1pm
+tennis tonight at 6
+tennis sunday 10am
+football tues 7pm
+gym tomorrow 7am
+swimming wed 6pm
+lunch with mum sunday 1pm
+dinner with sarah friday 7.30pm
+drinks with the lads sat 8pm
+party at jacks saturday
+wedding 14th march
+birthday party sun 2pm
+mums birthday 3rd dec
+dads birthday on the 9th
+meeting with simon monday 10am
+work meeting tues 2pm
+interview thurs 11am
+job interview 18th nov 10am
+zoom call with emily wed 3pm
+call with the bank friday 2pm
+parents evening thurs 6pm
+school play 10th dec 6pm
+vet monday 4pm
+vets for the dog tue 5pm
+mot booked fri 9am
+car service thursday 8.30am
+garage 25th nov 9am
+boiler man coming tues 8-12
+plumber coming wednesday 10am
+jrht coming to paint the bathroom monday 9am
+simon coming for the countertops thurs
+electrician friday morning
+flight to spain 3rd jan 6am
+train to london sat 7.15am
+gig at the arena 12/12 7pm
+concert sat night
+cinema with the kids sunday 3pm
+football match sat 3pm
+york learning class tues 6pm
+maths assessment wed 10am
+maths class thursday 1pm
+course starts 5th jan
+council meeting 2nd dec 11am
+viewing at 2pm saturday
+date night friday 8pm
+bbq at steves sunday 1pm
+christmas do 19th dec
+night out sat
+coffee with dave tomorrow 11am
+meet paul at the pub fri 7pm
+pick kids up from school 3.15pm friday
+dentsit tues 3pm
+docters appt fri 10am
+apointment wed 2pm
+hairut sat 10
+tenis tomoz at 6
+diner with mum sun 5pm
+meting monday 9am
+put dentist in my diary for tuesday
+add to calendar chiro friday 5pm
+diary: tennis saturday 9am
+in my diary football sunday
+calendar meeting 1st dec 3pm
+dentist
+doctors appointment
+book in the chiro
+interview next week
+appointment tomorrow
+eye test monday
+blood test thurs 8.40am
+flu jab sat 10am
+covid jab next friday
+smear test 3rd dec
+scan 15th jan
+bins out tonight 8pm

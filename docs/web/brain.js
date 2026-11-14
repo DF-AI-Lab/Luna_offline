@@ -132,10 +132,54 @@
     return cap(s);
   }
 
-  function guess(raw, now, lessons) {
+  // ---------- which kind? ----------
+  // The OLD way (hand-written rules). Kept as a safety net if the trained brain is missing, and so the
+  // trainer can score old vs new on the same exam.
+  function rulesKind(raw, now, lessons) {
     const msg = String(raw || '').trim();
     const t = ' ' + msg.toLowerCase().replace(/[’']/g, "'") + ' ';
-    const out = { kind: 'task', title: '', text: '', date: '', time: '', end: '', estimate_mins: 0, about: '', category: '', search: '', amount: 0, money_type: '', day: '', confidence: 0.5, why: '' };
+    const dt = findDate(t, now), tm = findTime(t), money = findAmount(t);
+    const isQ = /\?\s*$/.test(msg) || QSTART.test(t.trim()) || /\b(am i free|what's on|whats on|what is on|how much|how's my|hows my)\b/.test(t);
+    if (isQ) return { kind: 'question', confidence: 0.85, why: 'question' };
+    const L = lessonFor(msg, lessons || []);
+    if (L) return { kind: L.right.split(' + ')[0].trim(), confidence: 0.9, why: 'past correction' };
+    if (money) return { kind: 'money', confidence: 0.8, why: 'amount' };
+    if (tm && tm.time) return { kind: 'calendar', confidence: 0.85, why: 'time' };
+    if (dt && DIARYISH.test(t)) return { kind: 'calendar', confidence: 0.8, why: 'date + event' };
+    if (NOTEISH.test(t)) return { kind: 'note', confidence: 0.75, why: 'note words' };
+    if (TASKISH.test(t)) return { kind: 'task', confidence: 0.8, why: 'to-do verb' };
+    if (DIARYISH.test(t)) return { kind: 'calendar', confidence: 0.55, why: 'event word' };
+    if (/\b(fridge|freezer|use by|leftovers)\b/.test(t)) return { kind: 'other', confidence: 0.7, why: 'fridge' };
+    return { kind: 'task', confidence: 0.45, why: 'not sure' };
+  }
+
+  // The NEW way: the trained Mini Brain (docs/brain/core.js + weights.js), plus Darren's own fixes learned live.
+  const LUNA = ['calendar', 'task', 'note', 'money', 'question', 'other'];
+  let brain = null, taught = '';
+  function getBrain() {
+    if (brain) return brain;
+    const MB = root.MiniBrain || (typeof require === 'function' ? (() => { try { return require('../brain/core.js'); } catch (e) { return null; } })() : null);
+    const W = root.MiniBrainWeights || (typeof require === 'function' ? (() => { try { return require('../brain/weights.js'); } catch (e) { return null; } })() : null);
+    if (MB && W) brain = MB.create(W);
+    return brain;
+  }
+  // His "Did you mean / Wrong app" fixes → nudge his own layer (only redone when the list changes; takes a few ms)
+  function teach(b, lessons) {
+    const key = JSON.stringify((lessons || []).map(l => [l.msg, l.right]));
+    if (key === taught) return; taught = key; b.forget();
+    for (const l of (lessons || []).slice().reverse()) b.learn(l.msg, String(l.right).split(' + ')[0].trim());
+  }
+  function think(msg, lessons) {
+    const b = getBrain(); if (!b) return null;
+    teach(b, lessons);
+    return b.predict(msg, { allowed: LUNA });
+  }
+
+  // force = the kind Darren picked from "Did you mean…?" (skips the guessing, keeps the details)
+  function guess(raw, now, lessons, force) {
+    const msg = String(raw || '').trim();
+    const t = ' ' + msg.toLowerCase().replace(/[’']/g, "'") + ' ';
+    const out = { kind: 'task', title: '', text: '', date: '', time: '', end: '', estimate_mins: 0, about: '', category: '', search: '', amount: 0, money_type: '', day: '', confidence: 0.5, why: '', options: [] };
     const hits = [];
     const dt = findDate(t, now), tm = findTime(t), money = findAmount(t);
     if (dt) { out.date = ymd(dt.date); hits.push(dt.hit); }
@@ -154,43 +198,41 @@
     if (/^\s*note\b|\b(in|to|into) (my )?notes?\b|\bnote:|\bmake a note\b|\bjot (it )?down\b/.test(t)) said = 'note';
     else if (/\b(in|to|into|on) (my )?(diary|calendar)\b|^\s*(diary|calendar)\b/.test(t)) said = 'calendar';
     else if (/\b(on|to) (my )?(to-?do( list)?|list)\b|^\s*(task|todo|to-?do)\b/.test(t)) said = 'task';
-    else if (money && /\b(wmm|where's my money|money|spent|spends?|spending|bought|paid|bill|direct debit|standing order|on the card|credit card)\b/.test(t)) said = 'money';
+    else if (money && /\b(wmm|where's my money|spends?)\b/.test(t)) said = 'money';
 
-    // 2) a question?
-    const isQ = !said && (/\?\s*$/.test(msg) || QSTART.test(t.trim()) || /\b(am i free|what's on|whats on|what is on|how much|how's my|hows my)\b/.test(t));
-    if (isQ) {
-      out.kind = 'question'; out.confidence = 0.85; out.why = 'question';
-      if (/\b(money|spare|spent|bills?|pots?|card|cash|afford|left till|payday|budget)\b/.test(t)) out.about = 'money';
-      else if (/\bnotes?\b|\bideas?\b/.test(t)) out.about = 'notes';
+    // 2) the kind: his pick > what he said > the Mini Brain > old rules
+    if (force && LUNA.includes(force)) { out.kind = force; out.confidence = 1; out.why = 'you picked'; }
+    else if (said) { out.kind = said; out.confidence = 0.95; out.why = 'you said where'; }
+    else {
+      const p = think(msg, lessons);
+      if (p) {
+        out.kind = p.label; out.confidence = Math.round(p.sure * 100) / 100;
+        out.options = p.ranked.slice(0, 3).filter(r => r.p >= 0.05).map(r => r.label);
+        out.why = `${Math.round(p.sure * 100)}% sure` + (p.why.length ? ` (${p.why.join(', ')})` : '') + (p.fixes.length ? `, read ${p.fixes.map(f => f[0] + '→' + f[1]).join(' ')}` : '');
+      } else { const r = rulesKind(msg, now, lessons); out.kind = r.kind; out.confidence = r.confidence; out.why = r.why; }
+    }
+
+    // 3) the details for that kind (Stage 2: rules, they're good at exact bits)
+    if (out.kind === 'question') {
+      if (/\b(money|spare|spent|spend|bills?|pots?|card|cash|afford|left till|payday|budget)\b/.test(t)) out.about = 'money';
+      else if (/\bnotes?\b|\bideas?\b|\b(code|password|number)\b/.test(t)) out.about = 'notes';
       else if (/\b(diary|calendar|free|busy|appointments?|events?|on (today|tomorrow|this week))\b/.test(t)) out.about = 'diary';
       else if (/\b(tasks?|to-?dos?|due|list|overdue)\b/.test(t)) out.about = 'tasks';
       else out.about = 'all';
       if (out.about === 'notes') {
         if (/\bhome\b/.test(t)) out.category = 'Home'; else if (/\bwork\b/.test(t)) out.category = 'Work';
         else if (/\bhealth\b/.test(t)) out.category = 'Health'; else if (/\b(ai lab|project ideas?|projects?)\b/.test(t)) out.category = 'AI Lab';
-        const ab = t.match(/\babout ([a-z0-9]+)/); if (ab && !out.category) out.search = ab[1];
+        const ab = t.match(/\babout (?:the |my )?([a-z0-9]+)/); if (ab && !out.category) out.search = ab[1];
       }
       return out;
     }
-
-    // 3) past corrections
-    const L = said ? null : lessonFor(msg, lessons || []);
-
-    // 4) the kind
-    if (said) { out.kind = said; out.confidence = 0.95; out.why = 'he said where'; }
-    else if (L) { out.kind = L.right.split(' + ')[0].trim(); out.confidence = 0.9; out.why = 'past correction'; }
-    else if (money) { out.kind = 'money'; out.confidence = 0.8; out.why = 'amount'; }
-    else if (tm && tm.time) { out.kind = 'calendar'; out.confidence = 0.85; out.why = 'time'; }
-    else if (dt && DIARYISH.test(t)) { out.kind = 'calendar'; out.confidence = 0.8; out.why = 'date + event'; }
-    else if (NOTEISH.test(t)) { out.kind = 'note'; out.confidence = 0.75; out.why = 'note words'; }
-    else if (TASKISH.test(t)) { out.kind = 'task'; out.confidence = 0.8; out.why = 'to-do verb'; }
-    else if (DIARYISH.test(t)) { out.kind = 'calendar'; out.confidence = 0.55; out.why = 'event word'; }
-    else if (/\b(fridge|freezer|use by|leftovers)\b/.test(t)) { out.kind = 'other'; out.confidence = 0.7; out.why = 'fridge'; }
-    else { out.kind = 'task'; out.confidence = 0.45; out.why = 'not sure'; }
-
     if (out.kind === 'money') {
-      out.amount = money ? Math.round(money.amount * 100) / 100 : 0;
-      if (money) hits.push(money.hit);
+      // money but no £ or money word ("tesco 23.50", "gas 40 friday"): take the plain number that isn't the time/date
+      let mo = money;
+      if (!mo) { const rest = hits.reduce((x, h) => h ? x.split(h).join(' ') : x, t); const pm = rest.match(/(?:^|\s)(\d{1,6}(?:\.\d{1,2})?)(?=\s|$)/); if (pm) mo = { amount: +pm[1], hit: pm[1] }; }
+      const money2 = mo;
+      out.amount = money2 ? Math.round(money2.amount * 100) / 100 : 0;
+      if (money2) hits.push(money2.hit);
       if ((m = t.match(/\b(paid|pay|paying) (£?\d[\d.,]* )?off (the |my )?(credit )?card\b|\bcard payment\b/))) { out.money_type = 'paid_off'; hits.push(m[0]); }
       else if ((m = t.match(/\b(on|with) (the |my )?(credit )?card\b|\bcredit card\b/))) { out.money_type = 'card'; hits.push(m[0]); }
       else if ((m = t.match(/\b(a|per|every) month\b|\bmonthly\b|\bdirect debit\b|\bstanding order\b|\bdd\b|\bbill\b|\bsubscription\b/))) {
@@ -201,8 +243,8 @@
       }
       else if (/\b(coming out|to come out|going out|will go|due|upcoming|next|not paid yet)\b/.test(t) || (out.date && out.date > ymd(now))) out.money_type = 'upcoming';
       else out.money_type = 'spend';
-      hits.push('wmm', "where's my money", 'credit card', 'card');
-      if (!out.amount) out.confidence = 0.4;
+      hits.push('wmm', "where's my money", 'credit card', 'card', 'coming out', 'going out', 'quid', 'pounds');
+      if (!out.amount) { out.confidence = Math.min(out.confidence, 0.4); out.why += ', no amount'; }
     }
     if (out.kind === 'note') {
       out.text = msg.replace(/^\s*(please\s+)?(add|put|save|write)?\s*(this\s+)?(to|in|into)?\s*(my\s+)?notes?\s*[:\-]?\s*/i, '')
@@ -214,7 +256,7 @@
     return out;
   }
 
-  const api = { readPrompt, guess, findDate, findTime, findAmount, ymd };
+  const api = { readPrompt, guess, rulesKind, getBrain, findDate, findTime, findAmount, ymd, LUNA };
   if (typeof module === 'object' && module.exports) module.exports = api;
   else root.LunaRules = api;
 })(typeof window !== 'undefined' ? window : globalThis);

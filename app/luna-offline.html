@@ -593,6 +593,19 @@ Message: ${t}`;
     }
   }
 
+  // "Did you mean…?": one button per likely kind (best first) + None. Resolves with the kind, or null.
+  const KIND_NAME = { calendar: 'Diary', task: 'To-do', note: 'Note', money: 'Money', question: 'A question', other: 'Fridge' };
+  const KIND_CLS = { calendar: 'cal', task: 'todo', note: 'note', money: 'money', question: '', other: '' };
+  function didYouMean(o, options) {
+    return new Promise(res => {
+      const el = o.say('Not sure. Did you mean…', `<div class="pick" data-ask>${options.map(k => `<button type="button" class="${KIND_CLS[k] || ''}" data-k="${k}">${esc(KIND_NAME[k] || k)}</button>`).join('')}<button type="button" data-k="">None</button></div>`);
+      el.querySelectorAll('[data-ask] button').forEach(b => b.onclick = () => {
+        el.querySelectorAll('[data-ask] button').forEach(x => { x.disabled = true; x.style.opacity = x === b ? 1 : .4; });
+        res(b.dataset.k || null);
+      });
+    });
+  }
+
   let busy = false;
   $('box').onsubmit = async e => {
     e.preventDefault();
@@ -600,12 +613,20 @@ Message: ${t}`;
     busy = true; $('sendbtn').disabled = true; $('text').value = '';
     fold(true); bubble(t);
     await ready;
-    const o = orbitSays();
+    let o = orbitSays();
     try {
       if (!sample || !mcp) { o.say("I can't reach Claude or your apps from here. Open me in claude.ai.", '', true); return; }
       let a;
       try { a = await understand(t); } catch (err) { o.say(trouble(err, 'Claude'), '', true); return; }
       if (!a || typeof a !== 'object') { o.say("I couldn't work that one out. Try saying it differently.", '', true); return; }
+      // the free brain isn't sure (under 80%)? Ask with buttons. His tap is saved as a lesson = it learns.
+      if (typeof a.confidence === 'number' && a.confidence < 0.8 && Array.isArray(a.options) && a.options.length > 1) {
+        const pick = await didYouMean(o, a.options);
+        if (!pick) { logIt({ msg: t, picked: a.kind, status: 'none' }); o.say('OK, I left it. Try saying it another way.'); return; }
+        learn({ msg: t, picked: a.kind, right: pick, how: 'asked' });
+        if (pick !== a.kind) a = window.LunaRules ? LunaRules.guess(t, new Date(), [], pick) : { ...a, kind: pick };
+        o = orbitSays();
+      }
       a.title = String(a.title || t).slice(0, 120); a.text = String(a.text || '').slice(0, 2000);
       a.date = /^\d{4}-\d\d-\d\d$/.test(a.date) ? a.date : '';
       a.time = /^\d\d:\d\d$/.test(a.time) ? a.time : ''; a.end = /^\d\d:\d\d$/.test(a.end) ? a.end : '';

@@ -1,0 +1,78 @@
+# Money: Where's My Money (spends, bills, card, paid off card).
+spent 12.50 at tesco
+spent £8 at greggs
+£12.50 tesco
+tesco 5.10 crisps
+greggs 3.40
+costa 4.20
+mcdonalds 7.99
+£25 amazon on the card
+amazon 25 on the card
+put 40 on the credit card for clothes
+£60 b&q on the card
+paid £100 off the card
+paid 150 off the credit card
+card payment 200
+add 20 to spends for sky
+add 15 to wmm for petrol
+petrol £50
+fuel 45
+diesel 60 quid
+£40 gas next friday
+gas 40 coming out friday
+council tax 120 coming out on the 1st
+rent 650 going out monday
+netflix £11 a month on the 3rd
+netflix 11 a month
+spotify 10.99 a month on the 15th
+new bill gym 25 monthly on the 1st
+phone bill 15 a month
+direct debit for water 30 on the 20th
+standing order 50 to savings on the 28th
+subscription disney 7.99 monthly
+bought a coat for 45
+bought shoes £30
+bought lunch 6.50
+paid 20 for the window cleaner
+paid the plumber 80
+paid £15 for parking
+spent 30 on food shopping
+spent a fiver in the shop
+spent a tenner on the bus
+lunch 8 quid
+takeaway £22
+chippy 14.50
+pub 18
+cinema tickets 24
+haircut £15
+barbers 12 pounds
+asda 43.20
+aldi 56.78
+lidl £38
+sainsburys 21.30
+morrisons 17.80
+co op 4.50
+boots 9.99
+primark £20
+argos 35
+ebay 12 on the card
+paypal 18.50
+train ticket 23.40
+bus 2.50
+taxi home £12
+uber 9.80
+vet bill £90
+dentist 25 paid
+prescription 9.90
+kids pocket money 10
+birthday present for mum 25
+wmm 15 tesco
+where's my money 20 petrol
+spnet 12 at tesco
+spet 5 in greggs
+tesco 5.1 crisp
+petrol 50 quid
+£5.10 vegtables
+veg 16.45
+milk and bread 3.20
+crisps 1.50

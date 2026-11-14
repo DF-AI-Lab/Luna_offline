@@ -86,6 +86,18 @@ const TN = 'https://tasknotes.df-ai-lab-hq.workers.dev', WMM = 'https://wmm-lite
   await page.locator('.log .them').last().locator('text=Undo').click(); await page.waitForTimeout(500);
   await send("how's my money");
   await page.screenshot({ path: OUT + '/4-chat.png' });
+  // 3b) not sure → "Did you mean…?" buttons; the tap is learned, so next time it's sure
+  await page.evaluate(() => localStorage.setItem('luna_brain_mode', 'offline'));
+  await send('jacket size large');
+  assert.match(await page.locator('.log .them').last().innerText(), /Did you mean/);
+  await page.screenshot({ path: OUT + '/4b-did-you-mean.png' });
+  await page.locator('.log [data-ask] button[data-k="note"]').last().click(); await page.waitForTimeout(700);
+  assert.match(await page.locator('.log .them').last().innerText(), /In your notes: jacket size large/);
+  const nNotes = calls.filter(c => c[2] === 'add_note').length;
+  await send('jacket size large');
+  assert.doesNotMatch(await page.locator('.log .them').last().innerText(), /Did you mean/, 'learned from the tap');
+  assert.equal(calls.filter(c => c[2] === 'add_note').length, nNotes + 1, 'second time goes straight to notes');
+  await page.screenshot({ path: OUT + '/4c-learned.png' });
   // 4) Always Claude, with a key + cap
   await page.evaluate(() => { localStorage.setItem('luna_brain_mode', 'claude'); localStorage.setItem('luna_claude_key', 'sk-ant-test'); });
   await send('gate code 4321'); await page.waitForTimeout(800);

@@ -1,9 +1,9 @@
 // Luna Offline web: Passport lock + ⚙ settings (apps, brain, data). Look only; Orbit's logic is untouched.
 (function () {
   'use strict';
-  const VERSION = '1.05';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
+  const VERSION = '1.06';   // shown at the top; bump on every update (tools/build_web.py writes version.json from it)
   // "What's new" lines for THIS version: shown in the update sheet on phones still on an older version. Short, plain.
-  const NOTES = ['Update now actually updates (no more loop)', 'Money fix: add 20 to spends now goes to Money (no £ needed)', 'Luna Assist logo and blue theme'];
+  const NOTES = ['New Mini Brain: learns from your taps, copes with typos', 'Not sure? It asks Did you mean… with buttons', 'Asks Claude only under 80% sure'];
   const $ = id => document.getElementById(id);
   const esc = s => String(s ?? '').replace(/[&<>"']/g, c => '&#' + c.charCodeAt(0) + ';');
   const cover = $('ppcover'), mount = $('ppmount');
@@ -163,7 +163,7 @@
           const w = reg.installing || reg.waiting;
           if (w) await new Promise(ok => { const t = setTimeout(ok, 8000); w.addEventListener('statechange', () => { if (w.state === 'activated' || w.state === 'redundant') { clearTimeout(t); ok(); } }); });
         }
-        await Promise.all(['./', 'index.html', 'web/settings.js', 'web/brain.js', 'web/web.css'].map(f => fetch(f, { cache: 'reload' }).catch(() => {})));
+        await Promise.all(['./', 'index.html', 'web/settings.js', 'brain/core.js', 'brain/weights.js', 'web/brain.js', 'web/web.css'].map(f => fetch(f, { cache: 'reload' }).catch(() => {})));
       } catch (e) {}
       location.reload();
     };

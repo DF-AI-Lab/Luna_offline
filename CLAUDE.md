@@ -1,6 +1,13 @@
 # Rules for Claude
 
+## The two Lunas (use these names)
+
+- **Luna Assist**: this repo, the web app on the phone (GitHub Pages)
+- **Luna Agent**: the claude.ai artifact (https://claude.ai/artifact/11AeVi2bLt7z72AW4FA8MS)
+
 ## 🚫 Don't touch the look unless Darren says so
+
+This is for **both** Luna Assist and Luna Agent.
 
 - **Top card** (the banner: LUNA, version tag, greeting, date, moon phase, ⚙, the real moon)
 - **Bottom card** (the "Tell Luna..." box and the Send button)

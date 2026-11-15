@@ -1,5 +1,13 @@
 # Rules for Claude
 
+## 🛑 Rule number 1: no change without Darren saying so
+
+- **Never change ANY look** (any app, any page, any colour, layout, text, icon, moon) unless Darren asks first
+- **Never rebuild or redesign anything** unless Darren tells you to
+- **Only change what he asked for.** Nothing extra, no "while I'm here"
+- Not sure? **Ask first**, change nothing
+- Looks take Darren hours to get right. Breaking one costs him hours.
+
 ## The two Lunas (use these names)
 
 - **Luna Assist**: this repo, the web app on the phone (GitHub Pages)

@@ -16,7 +16,9 @@ Leave both exactly as they are: layout, colours, moon, text, buttons.
 Only change them when Darren asks for that change in his own words.
 A new feature is not a reason to change them. Ask first.
 
-(Why: v1.03 swapped the top for a blue "Luna Assist" header. v1.09 put it back.)
+How the top card looks now (v1.10), keep it:
+- Luna Assist: "LUNA ASSIST", blue theme, the real moon with a soft dark side
+- Luna Agent: "LUNA", violet theme, the real moon
 
 ## Talking to Darren
 
